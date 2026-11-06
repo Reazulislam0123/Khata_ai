@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#059669" />
+      <stop offset="100%" stop-color="#10b981" />
+    </linearGradient>
+  </defs>
+  <!-- Background Rounded Rect -->
+  <rect width="32" height="32" rx="8" fill="url(#grad)" />
+  
+  <!-- Exam Paper Icon -->
+  <path d="M9 7C9 5.89543 9.89543 5 11 5H17.5858C18.1162 5 18.6249 5.21071 19 5.58579L22.4142 9C22.7893 9.3751 23 9.88378 23 10.4142V23C23 24.1046 22.1046 25 21 25H11C9.89543 25 9 24.1046 9 23V7Z" fill="white" fill-opacity="0.95" />
+  
+  <!-- Folded Corner Line -->
+  <path d="M17 5V9C17 9.55228 17.4477 10 18 10H22" stroke="#059669" stroke-width="1.5" stroke-linecap="round" />
+  
+  <!-- Checkmark / Grading lines on paper -->
+  <path d="M12 14H18M12 17H16" stroke="#059669" stroke-width="1.5" stroke-linecap="round" />
+  
+  <!-- Sparkle AI Star -->
+  <path d="M23 16L24 18L26 19L24 20L23 22L22 20L20 19L22 18L23 16Z" fill="#FBBF24" />
+</svg>

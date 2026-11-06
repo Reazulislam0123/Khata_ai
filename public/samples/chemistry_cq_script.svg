@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1100" width="100%" height="100%">
+  <!-- Paper Background with subtle texture -->
+  <rect width="800" height="1100" fill="#fcfbf7" />
+  
+  <!-- Left Margin Line (Red) -->
+  <line x1="110" y1="0" x2="110" y2="1100" stroke="#f87171" stroke-width="1.8" />
+  <line x1="114" y1="0" x2="114" y2="1100" stroke="#fca5a5" stroke-width="0.8" opacity="0.6" />
+  <!-- Top Margin Line (Red) -->
+  <line x1="0" y1="100" x2="800" y2="100" stroke="#f87171" stroke-width="1.5" />
+  
+  <!-- Horizontal Lined Paper Rules (Blue) -->
+  <defs>
+    <pattern id="ruledLinesChem" width="800" height="34" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="33" x2="800" y2="33" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="0" />
+    </pattern>
+  </defs>
+  <rect x="0" y="100" width="800" height="1000" fill="url(#ruledLinesChem)" />
+
+  <!-- Top Header Metadata (Date, Roll, Page) -->
+  <text x="130" y="65" font-family="'Courier New', monospace" font-size="14" fill="#64748b" font-weight="bold">বিষয়: রসায়ন ২য় পত্র (তড়িৎ রসায়ন সৃজনশীল খাতা)</text>
+  <text x="640" y="65" font-family="'Courier New', monospace" font-size="14" fill="#64748b">পৃষ্ঠা নং: ০১</text>
+  <text x="130" y="88" font-family="'Courier New', monospace" font-size="12" fill="#94a3b8">বোর্ড রোল: ৪১২৮৭০ | তারিখ: ২৯/০৯/২০২৬</text>
+
+  <!-- Question Heading (Handwritten Ink Style) -->
+  <g fill="#1e293b" font-family="'Comic Sans MS', 'SolaimanLipi', 'Kalpurush', sans-serif">
+    <text x="350" y="130" font-size="18" font-weight="bold" text-anchor="middle" text-decoration="underline" fill="#0f172a">৩ নং প্রশ্নের উত্তর</text>
+    
+    <!-- Part (ক) -->
+    <text x="130" y="165" font-size="15" font-weight="bold" fill="#0369a1">(ক)</text>
+    <text x="170" y="165" font-size="14" fill="#1e293b">তড়িৎ রাসায়নিক তুল্যাঙ্ক (Z):</text>
+    <text x="130" y="198" font-size="14" fill="#334155">কোনো তড়িৎ বিশ্লেষ্যের মধ্য দিয়ে এক কুলম্ব (1 C) তড়িৎ প্রবাহিত করলে</text>
+    <text x="130" y="232" font-size="14" fill="#334155">তড়িৎদ্বারে যে পরিমাণ পদার্থ জমা বা দ্রবীভূত হয় তাকে তার তড়িৎ রাসায়নিক তুল্যাঙ্ক বলে।</text>
+    
+    <!-- Teacher Red Pen Mark for (ka) -->
+    <path d="M 680 180 L 695 200 L 735 155" fill="none" stroke="#dc2626" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+    <text x="740" y="180" font-family="sans-serif" font-size="18" font-weight="bold" fill="#dc2626">১</text>
+
+    <!-- Part (খ) -->
+    <text x="130" y="295" font-size="15" font-weight="bold" fill="#0369a1">(খ)</text>
+    <text x="170" y="295" font-size="14" fill="#1e293b">গ্যালভানিক কোষে লবণ সেতুর ভূমিকা:</text>
+    <text x="130" y="332" font-size="14" fill="#334155">১. দুটি অর্ধকোষের দ্রবণের মধ্যে সরাসরি মিশ্রণ ছাড়াই সংযোগ স্থাপন করে তড়িৎ বর্তনী পূর্ণ করে।</text>
+    <text x="130" y="366" font-size="14" fill="#334155">২. উভয় অর্ধকোষের দ্রবণে ক্যাটায়ন (K⁺) ও অ্যানায়ন (Cl⁻ বা NO₃⁻) সরবরাহ করে</text>
+    <text x="130" y="400" font-size="14" fill="#334155">তড়িৎ নিরপেক্ষতা বজায় রাখে, ফলে বিভব পার্থক্য শূন্য হওয়া রোধ হয় এবং বিদ্যুৎ প্রবাহ অব্যাহত থাকে।</text>
+
+    <!-- Teacher Red Pen Mark for (kha) -->
+    <path d="M 680 370 L 695 390 L 735 345" fill="none" stroke="#dc2626" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+    <text x="740" y="375" font-family="sans-serif" font-size="18" font-weight="bold" fill="#dc2626">২</text>
+
+    <!-- Part (গ) -->
+    <text x="130" y="495" font-size="15" font-weight="bold" fill="#0369a1">(গ)</text>
+    <text x="170" y="495" font-size="14" fill="#1e293b">উদ্দীপক অনুসারে ক্যাথোডে সঞ্চিত তামার ভর (W) নির্ণয়:</text>
+    <text x="130" y="530" font-size="14" fill="#334155">তড়িৎ প্রবাহ, I = 2.5 A; সময়, t = 12 মিনিট = 12 × 60 = 720 s</text>
+    <text x="130" y="565" font-size="14" fill="#334155">কপারের পারমাণবিক ভর, M = 63.5 g/mol; যোজ্যতা, e = 2; ফ্যারাডে, F = 96500 C</text>
+    <text x="130" y="605" font-size="14" font-weight="bold" fill="#0f172a">ফ্যারাডের ১ম সূত্র মতে, W = (M × I × t) / (e × F)</text>
+    <text x="130" y="640" font-size="14" fill="#334155">⇒ W = (63.5 × 2.5 × 720) / (2 × 96500)</text>
+    <text x="130" y="675" font-size="14" fill="#334155">⇒ W = 114300 / 193000</text>
+    <text x="130" y="710" font-size="15" font-weight="bold" fill="#0f172a">∴ W = 0.5922 g ≈ 0.59 g তামা সঞ্চিত হবে (Ans.)</text>
+
+    <!-- Teacher Red Pen Mark for (ga) -->
+    <path d="M 680 620 L 695 640 L 735 595" fill="none" stroke="#dc2626" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+    <text x="740" y="625" font-family="sans-serif" font-size="18" font-weight="bold" fill="#dc2626">৩</text>
+
+    <!-- Part (ঘ) -->
+    <text x="130" y="770" font-size="15" font-weight="bold" fill="#0369a1">(ঘ)</text>
+    <text x="170" y="770" font-size="14" fill="#1e293b">Zn(s) | Zn²⁺(0.1M) || Cu²⁺(0.01M) | Cu(s) কোষের EMF ও স্বতঃস্ফূর্ততা:</text>
+    <text x="130" y="805" font-size="14" fill="#334155">প্রমাণ তড়িৎচালক বল, E°cell = E°(Cu²⁺/Cu) - E°(Zn²⁺/Zn) = 0.34 - (-0.76) = +1.10 V</text>
+    <text x="130" y="840" font-size="14" fill="#334155">নার্নস্ট সমীকরণ: Ecell = E°cell - (0.0591 / n) log([Zn²⁺] / [Cu²⁺])</text>
+    <text x="130" y="875" font-size="14" fill="#334155">Ecell = 1.10 - (0.0591 / 2) log(0.1 / 0.01) = 1.10 - 0.02955 × 1 = 1.07 V</text>
+    <text x="130" y="910" font-size="14" font-weight="bold" fill="#0f172a">যেহেতু Ecell &gt; 0 (ধনাত্মক) এবং ΔG = -nFEcell &lt; 0 (ঋণাত্মক),</text>
+    <text x="130" y="945" font-size="14" font-weight="bold" fill="#0f172a">সুতরাং কোষ বিক্রিয়াটি স্বতঃস্ফূর্তভাবে সংঘটিত হবে।</text>
+
+    <!-- Teacher Red Pen Mark for (gha) -->
+    <path d="M 680 870 L 695 890 L 735 845" fill="none" stroke="#dc2626" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+    <text x="730" y="875" font-family="sans-serif" font-size="18" font-weight="bold" fill="#dc2626">৩.৫</text>
+  </g>
+
+  <!-- Total Teacher Score Circle on Top Right -->
+  <circle cx="730" cy="55" r="28" fill="none" stroke="#dc2626" stroke-width="2.5" />
+  <text x="730" y="61" font-family="'Comic Sans MS', sans-serif" font-size="18" font-weight="bold" fill="#dc2626" text-anchor="middle">৯.৫/১০</text>
+</svg>

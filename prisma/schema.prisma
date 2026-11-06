@@ -1,0 +1,115 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  TEACHER
+  ADMIN
+}
+
+enum SubmissionStatus {
+  PENDING_EVALUATION
+  EVALUATING
+  EVALUATED
+  NEEDS_REVIEW
+}
+
+model User {
+  id           String       @id @default(cuid())
+  email        String       @unique
+  name         String
+  role         Role         @default(STUDENT)
+  institution  String?
+  avatarUrl    String?
+  phone        String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  examsCreated Exam[]
+  submissions  Submission[]
+}
+
+model Exam {
+  id                  String       @id @default(cuid())
+  title               String
+  subject             String
+  curriculumCode      String
+  creatorId           String
+  creator             User         @relation(fields: [creatorId], references: [id])
+  totalMarks          Int
+  durationMinutes     Int
+  isOnline            Boolean      @default(true)
+  isPublished         Boolean      @default(true)
+  negativeMarkingRate Float        @default(0.0)
+  passMarkPercentage  Int          @default(33)
+  accessCode          String?
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+  questions           Question[]
+  submissions         Submission[]
+}
+
+model Question {
+  id           String       @id @default(cuid())
+  examId       String
+  exam         Exam         @relation(fields: [examId], references: [id], onDelete: Cascade)
+  type         String       // 'MCQ' | 'CQ' | 'DESCRIPTIVE' | 'IELTS_TASK'
+  orderIndex   Int
+  marks        Float
+  questionText String
+  stimulusText String?
+  imageUrl     String?
+  metadata     Json?
+  createdAt    DateTime     @default(now())
+  rubrics      Rubric[]
+}
+
+model Rubric {
+  id          String   @id @default(cuid())
+  questionId  String
+  question    Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  criterion   String
+  maxPoints   Float
+  description String
+  keywords    String[]
+}
+
+model Submission {
+  id                 String           @id @default(cuid())
+  examId             String
+  exam               Exam             @relation(fields: [examId], references: [id])
+  studentId          String
+  student            User             @relation(fields: [studentId], references: [id])
+  status             SubmissionStatus @default(PENDING_EVALUATION)
+  submittedAt        DateTime         @default(now())
+  answerSheetImages  String[]
+  answers            Json
+  evaluation         Evaluation?
+}
+
+model Evaluation {
+  id                  String     @id @default(cuid())
+  submissionId        String     @unique
+  submission          Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  evaluatedBy         String
+  aiModelId           String
+  aiProvider          String
+  evaluatedAt         DateTime   @default(now())
+  totalScore          Float
+  maxScore            Float
+  percentage          Float
+  grade               String
+  gpa                 Float
+  overallConfidence   Float
+  overallFeedback     String
+  hasLegibilityIssues Boolean    @default(false)
+  legibilitySummary   String?
+  teacherRemarks      String?
+  isApprovedByTeacher Boolean    @default(false)
+  questionBreakdown   Json
+}

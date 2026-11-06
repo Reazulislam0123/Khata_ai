@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1100" width="100%" height="100%">
+  <!-- Paper Background with subtle texture -->
+  <rect width="800" height="1100" fill="#fcfbf7" />
+  
+  <!-- Left Margin Line (Red) -->
+  <line x1="110" y1="0" x2="110" y2="1100" stroke="#f87171" stroke-width="1.8" />
+  <line x1="114" y1="0" x2="114" y2="1100" stroke="#fca5a5" stroke-width="0.8" opacity="0.6" />
+  <!-- Top Margin Line (Red) -->
+  <line x1="0" y1="100" x2="800" y2="100" stroke="#f87171" stroke-width="1.5" />
+  
+  <!-- Horizontal Lined Paper Rules (Blue) -->
+  <defs>
+    <pattern id="ruledLinesMath" width="800" height="34" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="33" x2="800" y2="33" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="0" />
+    </pattern>
+  </defs>
+  <rect x="0" y="100" width="800" height="1000" fill="url(#ruledLinesMath)" />
+
+  <!-- Top Header Metadata (Date, Roll, Page) -->
+  <text x="130" y="65" font-family="'Courier New', monospace" font-size="14" fill="#64748b" font-weight="bold">বিষয়: উচ্চতর গণিত (স্থানাঙ্ক জ্যামিতি সৃজনশীল খাতা)</text>
+  <text x="640" y="65" font-family="'Courier New', monospace" font-size="14" fill="#64748b">পৃষ্ঠা নং: ০১</text>
+  <text x="130" y="88" font-family="'Courier New', monospace" font-size="12" fill="#94a3b8">বোর্ড রোল: ৩৯১০০৫ | তারিখ: ২৯/০৯/২০২৬</text>
+
+  <!-- Question Heading (Handwritten Ink Style) -->
+  <g fill="#1e293b" font-family="'Comic Sans MS', 'SolaimanLipi', 'Kalpurush', sans-serif">
+    <text x="350" y="130" font-size="18" font-weight="bold" text-anchor="middle" text-decoration="underline" fill="#0f172a">২ নং প্রশ্নের উত্তর</text>
+    
+    <!-- Part (ক) -->
+    <text x="130" y="165" font-size="15" font-weight="bold" fill="#0369a1">(ক)</text>
+    <text x="170" y="165" font-size="14" fill="#1e293b">মূলবিন্দু O(0, 0) ও P(3, 4) বিন্দুর দূরত্ব:</text>
+    <text x="130" y="198" font-size="14" fill="#334155">দূরত্ব d = √{(x₂ - x₁)² + (y₂ - y₁)²} = √{(3 - 0)² + (4 - 0)²}</text>
+    <text x="130" y="232" font-size="14" font-weight="bold" fill="#0f172a">d = √(9 + 16) = √25 = 5 একক (Ans.)</text>
+    
+    <!-- Teacher Red Pen Mark for (ka) -->
+    <path d="M 680 180 L 695 200 L 735 155" fill="none" stroke="#dc2626" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+    <text x="740" y="180" font-family="sans-serif" font-size="18" font-weight="bold" fill="#dc2626">১</text>
+
+    <!-- Part (খ) -->
+    <text x="130" y="295" font-size="15" font-weight="bold" fill="#0369a1">(খ)</text>
+    <text x="170" y="295" font-size="14" fill="#1e293b">দুটি সরলরেখা পরস্পর সমান্তরাল হওয়ার শর্ত:</text>
+    <text x="130" y="332" font-size="14" fill="#334155">যদি দুটি সরলরেখার সমীকরণ y = m₁x + c₁ এবং y = m₂x + c₂ হয়,</text>
+    <text x="130" y="366" font-size="14" fill="#334155">তবে রেখাদ্বয় সমান্তরাল হবে যদি এবং কেবল যদি তাদের ঢাল সমান হয়, অর্থাৎ m₁ = m₂।</text>
+    <text x="130" y="400" font-size="14" fill="#334155">জ্যামিতিকভাবে রেখাদ্বয় x-অক্ষের ধনাত্মক দিকের সাথে সমান কোণ θ উৎপন্ন করে।</text>
+    <text x="130" y="434" font-size="14" font-weight="bold" fill="#0f172a">অতএব tan θ₁ = tan θ₂ ⇒ m₁ = m₂ (প্রমাণিত)।</text>
+
+    <!-- Teacher Red Pen Mark for (kha) -->
+    <path d="M 680 370 L 695 390 L 735 345" fill="none" stroke="#dc2626" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+    <text x="740" y="375" font-family="sans-serif" font-size="18" font-weight="bold" fill="#dc2626">২</text>
+
+    <!-- Part (গ) -->
+    <text x="130" y="495" font-size="15" font-weight="bold" fill="#0369a1">(গ)</text>
+    <text x="170" y="495" font-size="14" fill="#1e293b">দেওয়া আছে, ত্রিভুজের শীর্ষবিন্দুত্রয় A(1, 2), B(4, 6), C(7, 2)।</text>
+    <text x="130" y="530" font-size="14" fill="#334155">বিন্দুগুলোকে ঘড়ির কাঁটার বিপরীত ক্রমে সাজিয়ে পাই:</text>
+    <text x="130" y="565" font-size="14" font-weight="bold" fill="#0f172a">ΔABC এর ক্ষেত্রফল = ½ | 1   4   7   1 |</text>
+    <text x="245" y="598" font-size="14" font-weight="bold" fill="#0f172a">| 2   6   2   2 |</text>
+    <text x="130" y="635" font-size="14" fill="#334155">= ½ | (1×6 + 4×2 + 7×2) - (2×4 + 6×7 + 2×1) |</text>
+    <text x="130" y="670" font-size="14" fill="#334155">= ½ | (6 + 8 + 14) - (8 + 42 + 2) | = ½ | 28 - 52 |</text>
+    <text x="130" y="705" font-size="14" font-weight="bold" fill="#0f172a">= ½ | -24 | = 12 বর্গ একক (Ans.)</text>
+
+    <!-- Teacher Red Pen Mark for (ga) -->
+    <path d="M 680 620 L 695 640 L 735 595" fill="none" stroke="#dc2626" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+    <text x="740" y="625" font-family="sans-serif" font-size="18" font-weight="bold" fill="#dc2626">৩</text>
+
+    <!-- Part (ঘ) -->
+    <text x="130" y="770" font-size="15" font-weight="bold" fill="#0369a1">(ঘ)</text>
+    <text x="170" y="770" font-size="14" fill="#1e293b">চতুর্থ শীর্ষবিন্দু D(4, -2) হলে চতুর্ভুজ ABCD এর প্রকৃতি নির্ণয়:</text>
+    <text x="130" y="805" font-size="14" fill="#334155">বাহুর দৈর্ঘ্য: AB = √{(4-1)² + (6-2)²} = √(9+16) = 5 একক</text>
+    <text x="130" y="840" font-size="14" fill="#334155">BC = √{(7-4)² + (2-6)²} = √(9+16) = 5 একক; CD = 5 একক, DA = 5 একক।</text>
+    <text x="130" y="875" font-size="14" fill="#334155">এখানে চার বাহু সমান (AB = BC = CD = DA = 5)।</text>
+    <text x="130" y="910" font-size="14" fill="#334155">কর্ণ AC = √{(7-1)² + (2-2)²} = 6 একক, কর্ণ BD = √{(4-4)² + (-2-6)²} = 8 একক।</text>
+    <text x="130" y="945" font-size="14" font-weight="bold" fill="#0f172a">যেহেতু চার বাহু সমান কিন্তু কর্ণদ্বয় অসমান (AC ≠ BD),</text>
+    <text x="130" y="980" font-size="14" font-weight="bold" fill="#0f172a">সুতরাং চতুর্ভুজ ABCD একটি রম্বস (সামান্তরিক নয়)। (মূল্যায়ন নির্ভুল)</text>
+
+    <!-- Teacher Red Pen Mark for (gha) -->
+    <path d="M 680 890 L 695 910 L 735 865" fill="none" stroke="#dc2626" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+    <text x="740" y="895" font-family="sans-serif" font-size="18" font-weight="bold" fill="#dc2626">৪</text>
+  </g>
+
+  <!-- Total Teacher Score Circle on Top Right -->
+  <circle cx="730" cy="55" r="28" fill="none" stroke="#dc2626" stroke-width="2.5" />
+  <text x="730" y="61" font-family="'Comic Sans MS', sans-serif" font-size="18" font-weight="bold" fill="#dc2626" text-anchor="middle">১০/১০</text>
+</svg>
