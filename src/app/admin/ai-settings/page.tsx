@@ -34,6 +34,7 @@ export default function AdminAISettingsPage() {
     error?: string;
   } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   useEffect(() => {
     fetch("/api/ai-settings")
@@ -47,17 +48,24 @@ export default function AdminAISettingsPage() {
             if (currentProv.baseUrl) setCustomBaseUrl(currentProv.baseUrl);
           }
         }
-      });
-  }, [selectedProvider]);
+      })
+      .catch((e) => console.warn("Failed to load AI settings:", e));
+  }, []);
 
   const handleSelectProvider = (prov: string) => {
     setSelectedProvider(prov);
     setTestResult(null);
+    setSaveSuccess(false);
     if (settings?.providers[prov]) {
       setApiKeyInput(settings.providers[prov].apiKey || "");
       if (settings.providers[prov].baseUrl) {
         setCustomBaseUrl(settings.providers[prov].baseUrl || "");
+      } else {
+        setCustomBaseUrl("");
       }
+    } else {
+      setApiKeyInput("");
+      setCustomBaseUrl("");
     }
   };
 
@@ -129,7 +137,9 @@ export default function AdminAISettingsPage() {
       });
       const data = await res.json();
       if (data.success) {
-        alert("AI Settings successfully saved!");
+        setSettings(updated);
+        setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 4000);
       }
     } catch (err) {
       console.error(err);
@@ -150,6 +160,11 @@ export default function AdminAISettingsPage() {
             <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold">
               ⚡ Super Admin Control Center
             </span>
+            {saveSuccess && (
+              <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 text-xs font-extrabold flex items-center gap-1 animate-pulse">
+                <CheckCircle2 className="h-3 w-3 text-emerald-600" /> Settings Saved!
+              </span>
+            )}
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-foreground mt-1">
             Multi-Model AI Gateway & BYOK Configuration
@@ -164,7 +179,7 @@ export default function AdminAISettingsPage() {
           disabled={isSaving}
           className="flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md shadow-emerald-600/20 hover:bg-emerald-700 transition-all disabled:opacity-60"
         >
-          {isSaving ? "Saving..." : "Save Active AI Configuration"}
+          {isSaving ? "Saving..." : saveSuccess ? "Saved Successfully ✓" : "Save Active AI Configuration"}
         </button>
       </div>
 
