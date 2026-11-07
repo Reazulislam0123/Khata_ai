@@ -214,15 +214,15 @@ export function PricingSection() {
           {plans.map((p) => (
             <div
               key={p.id}
-              className={`relative rounded-2xl border p-6 flex flex-col justify-between transition-all hover:shadow-xl ${
+              className={`relative rounded-3xl border p-6 sm:p-7 flex flex-col justify-between card-hover-pro transition-all ${
                 p.popular
-                  ? "border-emerald-500 bg-card shadow-lg shadow-emerald-500/10 ring-2 ring-emerald-500/20"
-                  : "border-border bg-card shadow-sm"
+                  ? "border-emerald-500 bg-card shadow-xl shadow-emerald-500/10 ring-2 ring-emerald-500/30"
+                  : "border-border bg-card shadow-sm hover:border-border/80"
               }`}
             >
               {p.popular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-emerald-600 px-3 py-0.5 text-[11px] font-bold text-white shadow-sm">
-                  Most Popular for Teachers
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-1 text-[11px] font-extrabold text-white shadow-md shadow-emerald-600/30 flex items-center gap-1.5 whitespace-nowrap">
+                  <Sparkles className="h-3 w-3" /> Most Popular for Teachers
                 </div>
               )}
 
@@ -243,7 +243,9 @@ export function PricingSection() {
                   </p>
                   {p.features.map((f, i) => (
                     <div key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
-                      <Check className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+                      <div className="h-4 w-4 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5 border border-emerald-200 dark:border-emerald-800">
+                        <Check className="h-2.5 w-2.5" />
+                      </div>
                       <span>{f}</span>
                     </div>
                   ))}
@@ -253,9 +255,9 @@ export function PricingSection() {
               <div className="mt-8">
                 <button
                   onClick={() => handleOpenCheckout(p.id)}
-                  className={`w-full py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm ${
+                  className={`w-full py-3 rounded-2xl text-xs font-bold transition-all shadow-sm active:scale-[0.98] ${
                     p.popular
-                      ? "bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-600/20"
+                      ? "bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg shadow-emerald-600/25"
                       : "bg-muted text-foreground hover:bg-accent border border-border"
                   }`}
                 >

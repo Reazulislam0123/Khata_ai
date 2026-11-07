@@ -30,9 +30,9 @@ export type QuestionType = "MCQ" | "CQ" | "WRITTEN" | "DESCRIPTIVE" | "IELTS_TAS
 export type DifficultyLevel = "EASY" | "MEDIUM" | "HARD";
 
 export interface IQuestion extends Document {
-  institutionId: mongoose.Types.ObjectId;
+  institutionId?: mongoose.Types.ObjectId;
   subjectId?: mongoose.Types.ObjectId;
-  createdBy: mongoose.Types.ObjectId;
+  createdBy?: mongoose.Types.ObjectId;
   type: QuestionType;
   questionText: string;
   stimulusText?: string;
@@ -94,9 +94,9 @@ const CQPartSchema = new Schema<ICQPart>(
 
 const QuestionSchema = new Schema<IQuestion>(
   {
-    institutionId: { type: Schema.Types.ObjectId, ref: "Institution", required: true },
+    institutionId: { type: Schema.Types.ObjectId, ref: "Institution", default: null },
     subjectId: { type: Schema.Types.ObjectId, ref: "Subject", default: null },
-    createdBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    createdBy: { type: Schema.Types.ObjectId, ref: "User", default: null },
     type: {
       type: String,
       enum: ["MCQ", "CQ", "WRITTEN", "DESCRIPTIVE", "IELTS_TASK"],

@@ -41,8 +41,14 @@ export async function POST(req: NextRequest) {
     await connectDB();
 
     const normalizedEmail = email.toLowerCase().trim();
-    const assignedRole: UserRole =
-      role === "TEACHER" || role === "ADMIN" ? "ADMIN" : "STUDENT";
+    let assignedRole: UserRole = "STUDENT";
+    if (normalizedEmail === "admin@khata.ai" || role === "SUPER_ADMIN") {
+      assignedRole = "SUPER_ADMIN";
+    } else if (role === "TEACHER" || role === "ADMIN" || normalizedEmail.includes("teacher") || normalizedEmail.includes("udvash")) {
+      assignedRole = "TEACHER";
+    } else {
+      assignedRole = "STUDENT";
+    }
 
     // 1. Check if user already exists in MongoDB
     let user = await User.findOne({
@@ -62,16 +68,19 @@ export async function POST(req: NextRequest) {
       await user.save();
       console.log(`✅ New user created in MongoDB: ${normalizedEmail}`);
     } else {
-      // Update firebaseUid if previously registered
+      // Update role if teacher or super_admin
+      if (normalizedEmail.includes("teacher") && user.role !== "TEACHER") {
+        user.role = "TEACHER";
+      }
       if (user.firebaseUid !== firebaseUid) {
         user.firebaseUid = firebaseUid;
-        await user.save();
       }
+      await user.save();
     }
 
     // 2. If registering as an institution / educator and institutionName is provided
     let institution = null;
-    if (assignedRole === "ADMIN" && institutionName && institutionName.trim()) {
+    if (assignedRole === "TEACHER" && institutionName && institutionName.trim()) {
       const trimmedInstName = institutionName.trim();
       let slug = generateSlug(trimmedInstName);
 

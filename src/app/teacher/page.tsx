@@ -26,15 +26,33 @@ import {
   Layers,
   ChevronRight,
   TrendingUp,
+  Lock,
 } from "lucide-react";
 import { Exam, Submission, Batch, EnrolledStudent } from "@/lib/types";
 import { useAuth } from "@/contexts/AuthContext";
+import QuestionBankCards from "@/components/teacher/QuestionBankCards";
 
 export default function TeacherDashboard() {
   const { firebaseUser, mongoUser } = useAuth();
   const [activeTab, setActiveTab] = useState<
-    "overview" | "students" | "batches" | "subjects" | "evaluations"
+    "overview" | "questions" | "students" | "batches" | "subjects" | "evaluations"
   >("overview");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get("tab");
+      if (
+        tabParam === "questions" ||
+        tabParam === "students" ||
+        tabParam === "batches" ||
+        tabParam === "subjects" ||
+        tabParam === "evaluations"
+      ) {
+        setActiveTab(tabParam as any);
+      }
+    }
+  }, []);
 
   const [exams, setExams] = useState<Exam[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
@@ -236,6 +254,43 @@ export default function TeacherDashboard() {
     return matchesSearch && matchesBatch;
   });
 
+  // Role separation guard: Students cannot access Teacher services
+  const userEmail = (mongoUser?.email || firebaseUser?.email || "").toLowerCase();
+  const isTeacher =
+    mongoUser?.role === "TEACHER" ||
+    mongoUser?.role === "ADMIN" ||
+    mongoUser?.role === "SUPER_ADMIN" ||
+    userEmail.includes("teacher") ||
+    userEmail.includes("udvash") ||
+    userEmail.includes("admin") ||
+    Boolean(mongoUser?.institutionId);
+
+  if (!loading && mongoUser && mongoUser.role === "STUDENT" && !isTeacher) {
+    return (
+      <div className="min-h-[75vh] flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-card border border-border p-8 rounded-3xl shadow-2xl text-center space-y-5 animate-in fade-in">
+          <div className="h-16 w-16 rounded-3xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 flex items-center justify-center mx-auto border border-amber-200 dark:border-amber-800 shadow-inner">
+            <Lock className="h-8 w-8" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-xl font-black text-foreground">Teacher Service Only</h2>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Your account (<strong>{mongoUser.email}</strong>) is registered as a <strong>Student</strong>. Teacher portal tools, question creators, and grading centers are reserved for educators.
+            </p>
+          </div>
+          <div className="pt-2">
+            <Link
+              href="/student"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-emerald-600 font-bold text-xs text-white hover:bg-emerald-700 shadow-lg shadow-emerald-600/25 transition-all"
+            >
+              <GraduationCap className="h-4 w-4" /> Go to Student Exam Arena
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto max-w-7xl px-4 sm:px-6 py-8 space-y-8">
       {/* Top Header */}
@@ -266,6 +321,13 @@ export default function TeacherDashboard() {
 
         {/* Primary Action Buttons */}
         <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            onClick={() => setActiveTab("questions")}
+            className="flex items-center gap-2 rounded-xl border border-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 px-4 py-2.5 text-xs sm:text-sm font-bold shadow-sm hover:bg-emerald-100 transition-all"
+          >
+            <Sparkles className="h-4 w-4 text-emerald-600" />
+            Question Cards
+          </button>
           <Link
             href="/teacher/evaluate"
             className="flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md shadow-emerald-600/20 hover:bg-emerald-700 transition-all"
@@ -275,10 +337,10 @@ export default function TeacherDashboard() {
           </Link>
           <Link
             href="/teacher/exams/new"
-            className="flex items-center gap-2 rounded-xl border border-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 px-4 py-2.5 text-xs sm:text-sm font-bold shadow-sm hover:bg-emerald-100 transition-all"
+            className="flex items-center gap-2 rounded-xl border border-border bg-card text-foreground px-4 py-2.5 text-xs sm:text-sm font-bold shadow-sm hover:bg-accent transition-all"
           >
             <PlusCircle className="h-4 w-4 text-emerald-600" />
-            Question & Rubric Builder
+            New Exam Builder
           </Link>
         </div>
       </div>
@@ -287,6 +349,7 @@ export default function TeacherDashboard() {
       <div className="flex items-center gap-2 overflow-x-auto pb-1 border-b border-border">
         {[
           { id: "overview", label: "Dashboard Overview", icon: Layers },
+          { id: "questions", label: "Question Bank (Cards)", icon: Sparkles },
           { id: "students", label: `Students (${students.length})`, icon: GraduationCap },
           { id: "batches", label: `Batches (${batches.length})`, icon: FolderPlus },
           { id: "subjects", label: `Subjects (${subjects.length})`, icon: BookMarked },
@@ -310,6 +373,13 @@ export default function TeacherDashboard() {
           );
         })}
       </div>
+
+      {/* ────────────────────────────────────────────────────────────────────────── */}
+      {/* TAB: QUESTION BANK (CARD MODE) */}
+      {/* ────────────────────────────────────────────────────────────────────────── */}
+      {activeTab === "questions" && (
+        <QuestionBankCards />
+      )}
 
       {/* ────────────────────────────────────────────────────────────────────────── */}
       {/* TAB 1: OVERVIEW */}

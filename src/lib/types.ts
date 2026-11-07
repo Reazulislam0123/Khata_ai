@@ -1,4 +1,4 @@
-export type UserRole = "STUDENT" | "TEACHER" | "ADMIN";
+export type UserRole = "STUDENT" | "TEACHER" | "ADMIN" | "SUPER_ADMIN";
 
 export type InstitutionType = "COACHING" | "SCHOOL" | "COLLEGE" | "VARSITY" | "INDIVIDUAL";
 

@@ -109,6 +109,14 @@ export default function StudentArenaPage() {
                 <CheckCircle2 className="h-3.5 w-3.5" /> Plan: {mongoUser?.plan || "FREE"} (Active)
               </div>
             )}
+            {(mongoUser?.role === "TEACHER" || mongoUser?.role === "ADMIN" || firebaseUser?.email?.includes("teacher")) && (
+              <Link
+                href="/teacher"
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 hover:bg-white/30 border border-white/30 text-white text-xs font-bold transition-colors ml-auto"
+              >
+                <span>Switch to Teacher Service →</span>
+              </Link>
+            )}
           </div>
           <h1 className="text-2xl sm:text-4xl font-black tracking-tight">
             {mongoUser || firebaseUser

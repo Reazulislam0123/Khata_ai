@@ -87,13 +87,21 @@ export default function LoginPage() {
         } catch {}
         window.location.href = "/admin";
         return;
-      } else if (role === "ADMIN" || role === "TEACHER" || data.user?.institutionId) {
+      } else if (
+        role === "ADMIN" ||
+        role === "TEACHER" ||
+        data.user?.institutionId ||
+        fbUser.email?.toLowerCase().includes("teacher") ||
+        fbUser.email?.toLowerCase().includes("udvash")
+      ) {
         window.location.href = "/teacher";
       } else {
         window.location.href = "/student";
       }
     } else {
       // If user is in Firebase but not yet synced to Mongo, sync now
+      const isTeacherEmail = fbUser.email?.toLowerCase().includes("teacher") || fbUser.email?.toLowerCase().includes("udvash");
+      const defaultRole = isSuperAdminEmail ? "SUPER_ADMIN" : isTeacherEmail ? "TEACHER" : "STUDENT";
       const syncRes = await fetch("/api/auth/sync-user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -101,11 +109,12 @@ export default function LoginPage() {
           firebaseUid: fbUser.uid,
           email: fbUser.email,
           name: isSuperAdminEmail ? "Super Admin" : fbUser.displayName || fbUser.email?.split("@")[0] || "User",
-          role: isSuperAdminEmail ? "SUPER_ADMIN" : "STUDENT",
+          role: defaultRole,
         }),
       });
       const syncData = await syncRes.json();
-      if (isSuperAdminEmail || syncData.user?.role === "SUPER_ADMIN") {
+      const finalRole = syncData.user?.role || defaultRole;
+      if (isSuperAdminEmail || finalRole === "SUPER_ADMIN") {
         try {
           localStorage.setItem(
             "khata_user",
@@ -120,7 +129,7 @@ export default function LoginPage() {
         } catch {}
         window.location.href = "/admin";
         return;
-      } else if (syncData.user?.role === "ADMIN") {
+      } else if (finalRole === "ADMIN" || finalRole === "TEACHER" || isTeacherEmail) {
         window.location.href = "/teacher";
       } else {
         window.location.href = "/student";
@@ -252,20 +261,23 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center p-4">
-      <div className="w-full max-w-md rounded-3xl border border-border bg-card p-8 shadow-2xl space-y-6">
+    <div className="min-h-[85vh] flex items-center justify-center p-4 bg-dot-pattern relative overflow-hidden">
+      {/* Background ambient lighting */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-emerald-500/10 blur-[100px] -z-10 rounded-full pointer-events-none" />
+
+      <div className="w-full max-w-md rounded-3xl border border-border/80 bg-card/95 backdrop-blur-md p-8 sm:p-9 shadow-2xl shadow-slate-900/10 space-y-6">
         <div className="text-center space-y-2">
-          <div className="h-12 w-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto border border-emerald-200 shadow-inner">
+          <div className="h-14 w-14 rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400 flex items-center justify-center mx-auto border border-emerald-200 dark:border-emerald-800 shadow-sm">
             <Lock className="h-6 w-6" />
           </div>
-          <h1 className="text-2xl font-black text-foreground">Welcome Back to KhataAI</h1>
-          <p className="text-xs text-muted-foreground">
+          <h1 className="text-2xl font-black text-foreground tracking-tight">Welcome Back to KhataAI</h1>
+          <p className="text-xs text-muted-foreground leading-relaxed">
             Sign in to access your student exam arena, view past results, or manage your institution portal.
           </p>
         </div>
 
         {error && (
-          <div className="p-3.5 rounded-xl border border-destructive/40 bg-destructive/10 text-destructive text-xs font-semibold flex items-center gap-2">
+          <div className="p-3.5 rounded-2xl border border-destructive/40 bg-destructive/10 text-destructive text-xs font-semibold flex items-center gap-2">
             <AlertCircle className="h-4 w-4 shrink-0" />
             <span>{error}</span>
           </div>
@@ -283,7 +295,7 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="e.g. you@example.com"
-              className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+              className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 focus:outline-none transition-all"
             />
           </div>
 
@@ -296,7 +308,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1"
+                className="text-[10px] font-bold text-muted-foreground hover:text-foreground flex items-center gap-1"
               >
                 {showPassword ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
                 {showPassword ? "Hide" : "Show"}
@@ -308,44 +320,51 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••••••"
-              className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+              className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 focus:outline-none transition-all"
             />
           </div>
 
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3 rounded-xl bg-emerald-600 font-bold text-sm text-white shadow-md shadow-emerald-600/20 hover:bg-emerald-700 transition-all disabled:opacity-60 flex items-center justify-center gap-2"
+            className="w-full py-3.5 rounded-2xl bg-emerald-600 font-bold text-sm text-white shadow-lg shadow-emerald-600/25 hover:bg-emerald-700 active:scale-[0.98] transition-all disabled:opacity-60 flex items-center justify-center gap-2"
           >
-            {isLoading ? "Signing in..." : "Sign In to KhataAI"}
+            {isLoading ? (
+              <>
+                <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span>Signing in...</span>
+              </>
+            ) : (
+              <span>Sign In to KhataAI</span>
+            )}
           </button>
         </form>
 
         {/* 1-Click Fast Fill Helpers */}
-        <div className="pt-3 border-t border-border space-y-2">
-          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider text-center">
+        <div className="pt-3 border-t border-border space-y-2.5">
+          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider text-center">
             One-Click Fast Demo Fill
           </p>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-2.5">
             <button
               type="button"
               onClick={() => handleFillDemo("student")}
-              className="py-2 px-3 rounded-xl bg-muted hover:bg-accent text-xs font-semibold text-foreground flex items-center justify-center gap-1.5 transition-colors"
+              className="py-2.5 px-3 rounded-xl border border-emerald-200/80 dark:border-emerald-800 bg-emerald-50/60 dark:bg-emerald-950/40 hover:bg-emerald-100 text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center justify-center gap-1.5 transition-all shadow-sm"
             >
-              <GraduationCap className="h-3.5 w-3.5 text-emerald-600" /> Student
+              <GraduationCap className="h-4 w-4 text-emerald-600" /> Student
             </button>
             <button
               type="button"
               onClick={() => handleFillDemo("institution")}
-              className="py-2 px-3 rounded-xl bg-muted hover:bg-accent text-xs font-semibold text-foreground flex items-center justify-center gap-1.5 transition-colors"
+              className="py-2.5 px-3 rounded-xl border border-teal-200/80 dark:border-teal-800 bg-teal-50/60 dark:bg-teal-950/40 hover:bg-teal-100 text-xs font-bold text-teal-800 dark:text-teal-300 flex items-center justify-center gap-1.5 transition-all shadow-sm"
             >
-              <Building2 className="h-3.5 w-3.5 text-emerald-600" /> Institution
+              <Building2 className="h-4 w-4 text-teal-600" /> Teacher / Institution
             </button>
           </div>
         </div>
 
         <div className="text-center text-xs text-muted-foreground pt-1">
-          Don't have an account?{" "}
+          Don&apos;t have an account?{" "}
           <Link href="/signup" className="font-bold text-emerald-600 hover:text-emerald-700">
             Create an account
           </Link>

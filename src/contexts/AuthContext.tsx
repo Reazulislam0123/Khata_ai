@@ -29,7 +29,7 @@ export interface MongoUser {
   firebaseUid: string;
   email: string;
   name: string;
-  role: "STUDENT" | "ADMIN" | "SUPER_ADMIN";
+  role: "STUDENT" | "TEACHER" | "ADMIN" | "SUPER_ADMIN";
   institutionId?: { _id: string; name: string; slug: string; subscriptionPlan: string } | null;
   batchId?: { _id: string; name: string; curriculumCode: string } | null;
   avatarUrl?: string;

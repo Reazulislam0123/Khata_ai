@@ -61,14 +61,14 @@ export default function SignupPage() {
           firebaseUid: fbUser.uid,
           email: fbUser.email,
           name: fbUser.displayName || name || fbUser.email?.split("@")[0] || "Khata User",
-          role: role === "TEACHER" ? "ADMIN" : "STUDENT",
+          role: role === "TEACHER" ? "TEACHER" : "STUDENT",
           institutionName: role === "TEACHER" ? institution.trim() || "My Institution" : undefined,
         }),
       });
 
       const data = await res.json();
       if (data.success) {
-        if (data.user?.role === "ADMIN") {
+        if (data.user?.role === "TEACHER" || data.user?.role === "ADMIN") {
           router.push("/teacher");
         } else {
           router.push("/student");
@@ -134,7 +134,7 @@ export default function SignupPage() {
           firebaseUid: fbUser.uid,
           email: fbUser.email,
           name: name.trim(),
-          role: role === "TEACHER" ? "ADMIN" : "STUDENT",
+          role: role === "TEACHER" ? "TEACHER" : "STUDENT",
           institutionName: role === "TEACHER" ? institution.trim() : undefined,
         }),
       });
@@ -142,7 +142,7 @@ export default function SignupPage() {
       const syncData = await syncRes.json();
 
       if (syncData.success) {
-        if (role === "TEACHER") {
+        if (role === "TEACHER" || syncData.user?.role === "TEACHER" || syncData.user?.role === "ADMIN") {
           router.push("/teacher");
         } else {
           router.push("/student");

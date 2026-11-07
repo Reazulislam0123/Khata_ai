@@ -1,7 +1,7 @@
 // src/models/User.ts
 import mongoose, { Document, Model, Schema } from "mongoose";
 
-export type UserRole = "STUDENT" | "ADMIN" | "SUPER_ADMIN";
+export type UserRole = "STUDENT" | "TEACHER" | "ADMIN" | "SUPER_ADMIN";
 export type SubscriptionStatus = "ACTIVE" | "PENDING_APPROVAL" | "INACTIVE" | "REJECTED";
 
 export interface IUser extends Document {
@@ -27,7 +27,7 @@ const UserSchema = new Schema<IUser>(
     firebaseUid: { type: String, required: true, unique: true, index: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     name: { type: String, required: true, trim: true },
-    role: { type: String, enum: ["STUDENT", "ADMIN", "SUPER_ADMIN"], default: "STUDENT" },
+    role: { type: String, enum: ["STUDENT", "TEACHER", "ADMIN", "SUPER_ADMIN"], default: "STUDENT" },
     institutionId: { type: Schema.Types.ObjectId, ref: "Institution", default: null },
     avatarUrl: { type: String, default: null },
     phone: { type: String, default: null },

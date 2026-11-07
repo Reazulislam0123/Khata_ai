@@ -24,6 +24,7 @@ import {
   LayoutDashboard,
   Activity,
   Sliders,
+  FileText,
 } from "lucide-react";
 
 export function Navbar() {
@@ -46,14 +47,29 @@ export function Navbar() {
         mongoUser?.role === "ADMIN" ||
         mongoUser?.role === "SUPER_ADMIN";
 
+      const isTeacher =
+        !isAdmin &&
+        (mongoUser?.role === "TEACHER" ||
+          userEmail.includes("teacher") ||
+          userEmail.includes("udvash") ||
+          Boolean(mongoUser?.institutionId));
+
+      const detectedRole = isAdmin
+        ? "ADMIN"
+        : isTeacher
+        ? "TEACHER"
+        : "STUDENT";
+
       const activeUser: User = {
         id: mongoUser?._id || firebaseUser?.uid || "usr_admin_01",
         name: isAdmin
           ? "admin"
+          : isTeacher
+          ? mongoUser?.name || "Teacher"
           : mongoUser?.name || firebaseUser?.displayName || userEmail.split("@")[0] || "User",
         email: userEmail,
-        role: isAdmin ? "ADMIN" : (mongoUser?.role as any) || "STUDENT",
-        institution: mongoUser?.institutionId?.name || (isAdmin ? "KhataAI HQ" : undefined),
+        role: detectedRole,
+        institution: mongoUser?.institutionId?.name || (isAdmin ? "KhataAI HQ" : isTeacher ? "Udvash Academic Care" : undefined),
         institutionSlug: mongoUser?.institutionId?.slug || undefined,
       };
       setCurrentUser(activeUser);
@@ -75,9 +91,19 @@ export function Navbar() {
               parsed.role === "ADMIN" ||
               parsed.role === "SUPER_ADMIN";
 
+            const isTeacher =
+              !isAdmin &&
+              (parsed.role === "TEACHER" ||
+                userEmail.includes("teacher") ||
+                userEmail.includes("udvash"));
+
             if (isAdmin) {
               parsed.role = "ADMIN";
               parsed.name = "admin";
+            } else if (isTeacher) {
+              parsed.role = "TEACHER";
+            } else {
+              parsed.role = "STUDENT";
             }
             setCurrentUser(parsed);
             return;
@@ -138,15 +164,41 @@ export function Navbar() {
     }
   };
 
-  const navLinks = [
-    { label: "Home", href: "/" },
-    { label: "Features & Pricing", href: "/pricing", icon: CreditCard },
-    { label: "Student Arena", href: "/student", icon: GraduationCap },
-    { label: "Institution Portals", href: "/portal", icon: Building2 },
-  ];
+  let navLinks: { label: string; href: string; icon?: any }[] = [];
+
+  if (currentUser?.role === "ADMIN") {
+    navLinks = [
+      { label: "Home", href: "/" },
+      { label: "Super Admin", href: "/admin", icon: ShieldCheck },
+      { label: "Subscriptions", href: "/admin/subscriptions", icon: CreditCard },
+      { label: "Institutions", href: "/admin/institutions", icon: Building2 },
+    ];
+  } else if (currentUser?.role === "TEACHER") {
+    navLinks = [
+      { label: "Home", href: "/" },
+      { label: "Teacher Dashboard", href: "/teacher", icon: LayoutDashboard },
+      { label: "Question Cards", href: "/teacher?tab=questions", icon: Sparkles },
+      { label: "Evaluate Scripts", href: "/teacher/evaluate", icon: FileCheck2 },
+      { label: "Student Arena", href: "/student", icon: GraduationCap },
+    ];
+  } else if (currentUser?.role === "STUDENT") {
+    navLinks = [
+      { label: "Home", href: "/" },
+      { label: "Student Arena", href: "/student", icon: GraduationCap },
+      { label: "My Exam Submissions", href: "/profile?tab=exams", icon: BookOpen },
+      { label: "Features & Pricing", href: "/pricing", icon: CreditCard },
+    ];
+  } else {
+    navLinks = [
+      { label: "Home", href: "/" },
+      { label: "Features & Pricing", href: "/pricing", icon: CreditCard },
+      { label: "Student Arena", href: "/student", icon: GraduationCap },
+      { label: "Institution Portals", href: "/portal", icon: Building2 },
+    ];
+  }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 transition-all">
+    <header className="sticky top-0 z-50 w-full border-b border-border/80 bg-background/85 backdrop-blur-md supports-[backdrop-filter]:bg-background/75 shadow-[0_1px_3px_rgba(0,0,0,0.03)] transition-all">
       <div className="container mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
         {/* Brand Logo */}
         <div className="flex items-center gap-8">
@@ -360,29 +412,83 @@ export function Navbar() {
                         </div>
                       </Link>
                     </div>
-                  ) : (
-                    /* ── Student / Teacher Standard Menu ── */
+                  ) : currentUser.role === "TEACHER" ? (
+                    /* ── Teacher Service Dedicated Menu ── */
                     <div className="space-y-1 py-1">
                       <Link
-                        href="/profile?tab=exams"
+                        href="/teacher"
                         onClick={() => setIsUserMenuOpen(false)}
                         className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-emerald-50/60 dark:hover:bg-emerald-950/40 transition-colors group"
                       >
                         <div className="h-10 w-10 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-200 dark:border-emerald-800 group-hover:scale-105 transition-transform">
-                          <BookOpen className="h-5 w-5" />
+                          <LayoutDashboard className="h-5 w-5" />
                         </div>
                         <div className="text-left">
                           <div className="font-bold text-xs sm:text-sm text-foreground group-hover:text-emerald-600 transition-colors">
-                            My Exams
+                            Teacher Dashboard
                           </div>
                           <div className="text-[11px] text-muted-foreground">
-                            Created exams & answer submissions
+                            Academic overview & students
                           </div>
                         </div>
                       </Link>
 
                       <Link
-                        href="/profile?tab=institutions"
+                        href="/teacher?tab=questions"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-emerald-50/60 dark:hover:bg-emerald-950/40 transition-colors group"
+                      >
+                        <div className="h-10 w-10 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-200 dark:border-emerald-800 group-hover:scale-105 transition-transform">
+                          <Sparkles className="h-5 w-5" />
+                        </div>
+                        <div className="text-left">
+                          <div className="font-bold text-xs sm:text-sm text-foreground group-hover:text-emerald-600 transition-colors">
+                            Question Bank (Cards)
+                          </div>
+                          <div className="text-[11px] text-muted-foreground">
+                            Create & manage CQ/MCQ cards
+                          </div>
+                        </div>
+                      </Link>
+
+                      <Link
+                        href="/teacher/exams/new"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-emerald-50/60 dark:hover:bg-emerald-950/40 transition-colors group"
+                      >
+                        <div className="h-10 w-10 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-200 dark:border-emerald-800 group-hover:scale-105 transition-transform">
+                          <FileText className="h-5 w-5" />
+                        </div>
+                        <div className="text-left">
+                          <div className="font-bold text-xs sm:text-sm text-foreground group-hover:text-emerald-600 transition-colors">
+                            Create New Exam
+                          </div>
+                          <div className="text-[11px] text-muted-foreground">
+                            Assemble rubrics & publish
+                          </div>
+                        </div>
+                      </Link>
+
+                      <Link
+                        href="/teacher/evaluate"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-emerald-50/60 dark:hover:bg-emerald-950/40 transition-colors group"
+                      >
+                        <div className="h-10 w-10 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-200 dark:border-emerald-800 group-hover:scale-105 transition-transform">
+                          <FileCheck2 className="h-5 w-5" />
+                        </div>
+                        <div className="text-left">
+                          <div className="font-bold text-xs sm:text-sm text-foreground group-hover:text-emerald-600 transition-colors">
+                            Evaluate Scripts
+                          </div>
+                          <div className="text-[11px] text-muted-foreground">
+                            Review handwritten answer sheets
+                          </div>
+                        </div>
+                      </Link>
+
+                      <Link
+                        href="/teacher?tab=batches"
                         onClick={() => setIsUserMenuOpen(false)}
                         className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-emerald-50/60 dark:hover:bg-emerald-950/40 transition-colors group"
                       >
@@ -391,10 +497,67 @@ export function Navbar() {
                         </div>
                         <div className="text-left">
                           <div className="font-bold text-xs sm:text-sm text-foreground group-hover:text-emerald-600 transition-colors">
-                            My Institutions
+                            Batches & Cohorts
                           </div>
                           <div className="text-[11px] text-muted-foreground">
-                            Manage portals, batches & codes
+                            Manage codes & enrolled students
+                          </div>
+                        </div>
+                      </Link>
+
+                      <Link
+                        href="/profile?tab=account"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-emerald-50/60 dark:hover:bg-emerald-950/40 transition-colors group"
+                      >
+                        <div className="h-10 w-10 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-200 dark:border-emerald-800 group-hover:scale-105 transition-transform">
+                          <KeyRound className="h-5 w-5" />
+                        </div>
+                        <div className="text-left">
+                          <div className="font-bold text-xs sm:text-sm text-foreground group-hover:text-emerald-600 transition-colors">
+                            Change Name & Password
+                          </div>
+                          <div className="text-[11px] text-muted-foreground">
+                            Edit full name & update password
+                          </div>
+                        </div>
+                      </Link>
+                    </div>
+                  ) : (
+                    /* ── Student Service Exclusive Menu ── */
+                    <div className="space-y-1 py-1">
+                      <Link
+                        href="/student"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-emerald-50/60 dark:hover:bg-emerald-950/40 transition-colors group"
+                      >
+                        <div className="h-10 w-10 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-200 dark:border-emerald-800 group-hover:scale-105 transition-transform">
+                          <GraduationCap className="h-5 w-5" />
+                        </div>
+                        <div className="text-left">
+                          <div className="font-bold text-xs sm:text-sm text-foreground group-hover:text-emerald-600 transition-colors">
+                            Student Exam Arena
+                          </div>
+                          <div className="text-[11px] text-muted-foreground">
+                            Take scheduled & public exams
+                          </div>
+                        </div>
+                      </Link>
+
+                      <Link
+                        href="/student/my-exams"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-emerald-50/60 dark:hover:bg-emerald-950/40 transition-colors group"
+                      >
+                        <div className="h-10 w-10 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-200 dark:border-emerald-800 group-hover:scale-105 transition-transform">
+                          <BookOpen className="h-5 w-5" />
+                        </div>
+                        <div className="text-left">
+                          <div className="font-bold text-xs sm:text-sm text-foreground group-hover:text-emerald-600 transition-colors">
+                            My Graded Khata & Results
+                          </div>
+                          <div className="text-[11px] text-muted-foreground">
+                            View evaluated answer sheets & GPA
                           </div>
                         </div>
                       </Link>
