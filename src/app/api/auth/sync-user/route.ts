@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    await connectDB();
+    const conn = await connectDB();
 
     const normalizedEmail = email.toLowerCase().trim();
     let assignedRole: UserRole = "STUDENT";
@@ -48,6 +48,25 @@ export async function POST(req: NextRequest) {
       assignedRole = "TEACHER";
     } else {
       assignedRole = "STUDENT";
+    }
+
+    if (!conn) {
+      console.warn("MongoDB unavailable in sync-user. Returning fallback profile.");
+      return NextResponse.json({
+        success: true,
+        user: {
+          id: `usr_${firebaseUid.slice(0, 10)}`,
+          firebaseUid,
+          email: normalizedEmail,
+          name: name.trim(),
+          role: assignedRole,
+          institutionId: null,
+          institutionSlug: null,
+          institutionName: institutionName || (assignedRole === "TEACHER" ? "Udvash Academic & Admission Care" : null),
+          isActive: true,
+          createdAt: new Date().toISOString(),
+        },
+      });
     }
 
     // 1. Check if user already exists in MongoDB

@@ -23,9 +23,15 @@ export default function AdminLoginPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ adminId, password }),
       });
-      const data = await res.json();
+      let data: any = null;
+      try {
+        const text = await res.text();
+        data = JSON.parse(text);
+      } catch {
+        data = null;
+      }
 
-      if (data.success) {
+      if (data?.success) {
         try {
           localStorage.setItem(
             "khata_user",

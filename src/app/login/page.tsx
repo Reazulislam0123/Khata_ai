@@ -23,6 +23,15 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   const formatFirebaseError = (errCode: string): string => {
+    if (!errCode) return "Login failed. Please check your credentials.";
+    if (
+      errCode.includes("Unexpected token") ||
+      errCode.includes("is not valid JSON") ||
+      errCode.includes("<!DOCTYPE") ||
+      errCode.includes("<html")
+    ) {
+      return "Authentication service unavailable. Please check your connection or use demo login.";
+    }
     switch (errCode) {
       case "auth/user-not-found":
       case "auth/wrong-password":
@@ -41,9 +50,19 @@ export default function LoginPage() {
     }
   };
 
+  const safeJsonParse = async (res: Response) => {
+    try {
+      const text = await res.text();
+      return JSON.parse(text);
+    } catch {
+      return null;
+    }
+  };
+
   const handleSuccessfulAuth = async (fbUser: any) => {
     const email = (fbUser.email || "").trim().toLowerCase();
     const isSuperAdminEmail = email === "admin@khata.ai" || email.startsWith("admin@");
+    const isTeacherEmail = email.includes("teacher") || email.includes("udvash");
 
     if (isSuperAdminEmail) {
       try {
@@ -63,73 +82,144 @@ export default function LoginPage() {
       return;
     }
 
-    const token = await fbUser.getIdToken();
-    const res = await fetch("/api/auth/me", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    if (res.ok) {
-      const data = await res.json();
-      const role = data.user?.role;
-
-      if (role === "SUPER_ADMIN" || isSuperAdminEmail) {
-        try {
-          localStorage.setItem(
-            "khata_user",
-            JSON.stringify({
-              id: data.user?._id || "usr_admin_01",
-              name: data.user?.name || "Super Admin",
-              email: "admin@khata.ai",
-              role: "ADMIN",
-            })
-          );
-          document.cookie = "khata_admin_session=authenticated_admin; path=/; max-age=604800";
-        } catch {}
-        window.location.href = "/admin";
-        return;
-      } else if (
-        role === "ADMIN" ||
-        role === "TEACHER" ||
-        data.user?.institutionId ||
-        fbUser.email?.toLowerCase().includes("teacher") ||
-        fbUser.email?.toLowerCase().includes("udvash")
-      ) {
-        window.location.href = "/teacher";
-      } else {
-        window.location.href = "/student";
-      }
-    } else {
-      // If user is in Firebase but not yet synced to Mongo, sync now
-      const isTeacherEmail = fbUser.email?.toLowerCase().includes("teacher") || fbUser.email?.toLowerCase().includes("udvash");
-      const defaultRole = isSuperAdminEmail ? "SUPER_ADMIN" : isTeacherEmail ? "TEACHER" : "STUDENT";
-      const syncRes = await fetch("/api/auth/sync-user", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          firebaseUid: fbUser.uid,
-          email: fbUser.email,
-          name: isSuperAdminEmail ? "Super Admin" : fbUser.displayName || fbUser.email?.split("@")[0] || "User",
-          role: defaultRole,
-        }),
+    try {
+      const token = await fbUser.getIdToken();
+      const res = await fetch("/api/auth/me", {
+        headers: { Authorization: `Bearer ${token}` },
       });
-      const syncData = await syncRes.json();
-      const finalRole = syncData.user?.role || defaultRole;
-      if (isSuperAdminEmail || finalRole === "SUPER_ADMIN") {
+
+      if (res.ok) {
+        const data = await safeJsonParse(res);
+        const role = data?.user?.role;
+
+        if (role === "SUPER_ADMIN" || isSuperAdminEmail) {
+          try {
+            localStorage.setItem(
+              "khata_user",
+              JSON.stringify({
+                id: data?.user?._id || "usr_admin_01",
+                name: data?.user?.name || "Super Admin",
+                email: "admin@khata.ai",
+                role: "ADMIN",
+              })
+            );
+            document.cookie = "khata_admin_session=authenticated_admin; path=/; max-age=604800";
+          } catch {}
+          window.location.href = "/admin";
+          return;
+        } else if (
+          role === "ADMIN" ||
+          role === "TEACHER" ||
+          data?.user?.institutionId ||
+          isTeacherEmail
+        ) {
+          try {
+            localStorage.setItem(
+              "khata_user",
+              JSON.stringify({
+                id: data?.user?._id || "usr_teacher_01",
+                name: data?.user?.name || fbUser.displayName || "Teacher",
+                email: fbUser.email,
+                role: "TEACHER",
+              })
+            );
+            document.cookie = `khata_user_session=${data?.user?._id || "usr_teacher_01"}; path=/; max-age=604800`;
+          } catch {}
+          window.location.href = "/teacher";
+          return;
+        } else {
+          try {
+            localStorage.setItem(
+              "khata_user",
+              JSON.stringify({
+                id: data?.user?._id || "usr_student_01",
+                name: data?.user?.name || fbUser.displayName || "Student",
+                email: fbUser.email,
+                role: "STUDENT",
+              })
+            );
+            document.cookie = `khata_user_session=${data?.user?._id || "usr_student_01"}; path=/; max-age=604800`;
+          } catch {}
+          window.location.href = "/student";
+          return;
+        }
+      } else {
+        // If user is in Firebase but not yet synced to Mongo, sync now
+        const defaultRole = isSuperAdminEmail ? "SUPER_ADMIN" : isTeacherEmail ? "TEACHER" : "STUDENT";
+        let finalRole = defaultRole;
         try {
-          localStorage.setItem(
-            "khata_user",
-            JSON.stringify({
-              id: syncData.user?._id || "usr_admin_01",
-              name: "Super Admin",
-              email: "admin@khata.ai",
-              role: "ADMIN",
-            })
-          );
-          document.cookie = "khata_admin_session=authenticated_admin; path=/; max-age=604800";
-        } catch {}
+          const syncRes = await fetch("/api/auth/sync-user", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              firebaseUid: fbUser.uid,
+              email: fbUser.email,
+              name: isSuperAdminEmail ? "Super Admin" : fbUser.displayName || fbUser.email?.split("@")[0] || "User",
+              role: defaultRole,
+            }),
+          });
+          const syncData = await safeJsonParse(syncRes);
+          if (syncData?.user?.role) {
+            finalRole = syncData.user.role;
+          }
+        } catch (syncErr) {
+          console.warn("sync-user network/parse error:", syncErr);
+        }
+
+        if (isSuperAdminEmail || finalRole === "SUPER_ADMIN") {
+          try {
+            localStorage.setItem(
+              "khata_user",
+              JSON.stringify({
+                id: "usr_admin_01",
+                name: "Super Admin",
+                email: "admin@khata.ai",
+                role: "ADMIN",
+              })
+            );
+            document.cookie = "khata_admin_session=authenticated_admin; path=/; max-age=604800";
+            document.cookie = "khata_user_session=usr_admin_01; path=/; max-age=604800";
+          } catch {}
+          window.location.href = "/admin";
+          return;
+        } else if (finalRole === "ADMIN" || finalRole === "TEACHER" || isTeacherEmail) {
+          try {
+            localStorage.setItem(
+              "khata_user",
+              JSON.stringify({
+                id: "usr_teacher_01",
+                name: fbUser.displayName || "Teacher",
+                email: fbUser.email,
+                role: "TEACHER",
+              })
+            );
+            document.cookie = "khata_user_session=usr_teacher_01; path=/; max-age=604800";
+          } catch {}
+          window.location.href = "/teacher";
+          return;
+        } else {
+          try {
+            localStorage.setItem(
+              "khata_user",
+              JSON.stringify({
+                id: "usr_student_01",
+                name: fbUser.displayName || "Student",
+                email: fbUser.email,
+                role: "STUDENT",
+              })
+            );
+            document.cookie = "khata_user_session=usr_student_01; path=/; max-age=604800";
+          } catch {}
+          window.location.href = "/student";
+          return;
+        }
+      }
+    } catch (authErr) {
+      console.warn("handleSuccessfulAuth error:", authErr);
+      // Fallback navigation based on email heuristic
+      if (isSuperAdminEmail) {
         window.location.href = "/admin";
-        return;
-      } else if (finalRole === "ADMIN" || finalRole === "TEACHER" || isTeacherEmail) {
+      } else if (isTeacherEmail) {
         window.location.href = "/teacher";
       } else {
         window.location.href = "/student";
@@ -158,8 +248,8 @@ export default function LoginPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ adminId: cleanEmail, password }),
         });
-        const adminData = await adminRes.json();
-        if (adminData.success) {
+        const adminData = await safeJsonParse(adminRes);
+        if (adminData?.success) {
           try {
             localStorage.setItem(
               "khata_user",
@@ -174,7 +264,6 @@ export default function LoginPage() {
             document.cookie = "khata_user_session=usr_admin_01; path=/; max-age=604800";
           } catch {}
 
-          // Also authenticate in Firebase for unified auth context
           try {
             await loginWithEmail(cleanEmail, password);
           } catch {
@@ -191,7 +280,86 @@ export default function LoginPage() {
       }
     }
 
-    // 2. Standard Firebase Authentication
+    // 2. Fast Resilient Demo Fill Logins (Teacher & Student)
+    const isTeacherDemo =
+      cleanEmail === "teacher@udvash.com" &&
+      (password === "password123" || password === "teacher123" || password === "admin123");
+
+    if (isTeacherDemo) {
+      try {
+        localStorage.setItem(
+          "khata_user",
+          JSON.stringify({
+            id: "usr_teacher_01",
+            name: "Prof. Rafiqul Islam (রফিকুল ইসলাম)",
+            email: "teacher@udvash.com",
+            role: "TEACHER",
+            institution: "Udvash Academic & Admission Care",
+          })
+        );
+        document.cookie = "khata_user_session=usr_teacher_01; path=/; max-age=604800";
+      } catch {}
+
+      try {
+        await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ emailOrId: cleanEmail, password }),
+        });
+      } catch {}
+
+      try {
+        await loginWithEmail(cleanEmail, password);
+      } catch {
+        try {
+          await registerWithEmail(cleanEmail, password);
+        } catch {}
+      }
+
+      window.location.href = "/teacher";
+      return;
+    }
+
+    const isStudentDemo =
+      cleanEmail === "student@dhakacollege.edu.bd" &&
+      (password === "password123" || password === "student123" || password === "admin123");
+
+    if (isStudentDemo) {
+      try {
+        localStorage.setItem(
+          "khata_user",
+          JSON.stringify({
+            id: "usr_student_01",
+            name: "Tahmid Hasan (তাহমিদ হাসান)",
+            email: "student@dhakacollege.edu.bd",
+            role: "STUDENT",
+            institution: "Dhaka College (HSC Science Batch '26)",
+          })
+        );
+        document.cookie = "khata_user_session=usr_student_01; path=/; max-age=604800";
+      } catch {}
+
+      try {
+        await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ emailOrId: cleanEmail, password }),
+        });
+      } catch {}
+
+      try {
+        await loginWithEmail(cleanEmail, password);
+      } catch {
+        try {
+          await registerWithEmail(cleanEmail, password);
+        } catch {}
+      }
+
+      window.location.href = "/student";
+      return;
+    }
+
+    // 3. Standard Firebase Authentication
     try {
       const userCred = await loginWithEmail(cleanEmail, password);
       await handleSuccessfulAuth(userCred.user);
@@ -213,8 +381,8 @@ export default function LoginPage() {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ emailOrId: cleanEmail, password }),
             });
-            const apiData = await apiRes.json();
-            if (apiData.success) {
+            const apiData = await safeJsonParse(apiRes);
+            if (apiData?.success) {
               if (
                 cleanEmail === "admin@khata.ai" ||
                 apiData.user?.role === "SUPER_ADMIN" ||
@@ -231,15 +399,31 @@ export default function LoginPage() {
                     })
                   );
                   document.cookie = "khata_admin_session=authenticated_admin; path=/; max-age=604800";
+                  document.cookie = "khata_user_session=usr_admin_01; path=/; max-age=604800";
                 } catch {}
                 window.location.href = "/admin";
                 return;
               } else if (apiData.user?.role === "ADMIN" || apiData.user?.role === "TEACHER" || apiData.user?.role === "INSTITUTION_ADMIN") {
+                try {
+                  localStorage.setItem(
+                    "khata_user",
+                    JSON.stringify(apiData.user)
+                  );
+                  document.cookie = `khata_user_session=${apiData.user?.id || "usr_teacher_01"}; path=/; max-age=604800`;
+                } catch {}
                 window.location.href = "/teacher";
+                return;
               } else {
+                try {
+                  localStorage.setItem(
+                    "khata_user",
+                    JSON.stringify(apiData.user)
+                  );
+                  document.cookie = `khata_user_session=${apiData.user?.id || "usr_student_01"}; path=/; max-age=604800`;
+                } catch {}
                 window.location.href = "/student";
+                return;
               }
-              return;
             }
           } catch {}
         }
