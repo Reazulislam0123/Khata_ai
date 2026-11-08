@@ -16,7 +16,7 @@ import {
   EyeOff,
 } from "lucide-react";
 import { UserRole } from "@/lib/types";
-import { registerWithEmail, loginWithGoogle } from "@/lib/firebase";
+import { registerWithEmail, loginWithEmail, loginWithGoogle } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function SignupPage() {
@@ -180,13 +180,12 @@ export default function SignupPage() {
       } catch {}
 
       // Seamless redirect
-      if (isSuperAdminEmail || finalUserRole === "SUPER_ADMIN") {
-        window.location.href = "/admin";
-      } else if (finalUserRole === "TEACHER" || finalUserRole === "ADMIN") {
-        window.location.href = "/teacher";
-      } else {
-        window.location.href = "/student";
-      }
+      const target = isSuperAdminEmail || finalUserRole === "SUPER_ADMIN"
+        ? "/admin"
+        : finalUserRole === "TEACHER" || finalUserRole === "ADMIN"
+        ? "/teacher"
+        : "/student";
+      window.location.replace(target);
     } catch (err: any) {
       if (err.code === "auth/popup-closed-by-user" || err.code === "auth/cancelled-popup-request") {
         setIsLoading(false);
@@ -289,15 +288,91 @@ export default function SignupPage() {
         }
       } catch {}
 
-      // 4. Redirect
-      if (isSuperAdminEmail || finalUserRole === "SUPER_ADMIN") {
-        window.location.href = "/admin";
-      } else if (finalUserRole === "TEACHER" || finalUserRole === "ADMIN") {
-        window.location.href = "/teacher";
-      } else {
-        window.location.href = "/student";
-      }
+      // 4. Redirect to portal
+      const target = isSuperAdminEmail || finalUserRole === "SUPER_ADMIN"
+        ? "/admin"
+        : finalUserRole === "TEACHER" || finalUserRole === "ADMIN"
+        ? "/teacher"
+        : "/student";
+      window.location.replace(target);
     } catch (err: any) {
+      // If user already exists in Firebase, try logging in and upgrading role to TEACHER
+      if (err.code === "auth/email-already-in-use") {
+        try {
+          const loginCred = await loginWithEmail(email.trim().toLowerCase(), password);
+          const fbUser = loginCred.user;
+          const userEmail = (fbUser.email || "").toLowerCase().trim();
+          const targetRole = role === "TEACHER" ? "TEACHER" : "STUDENT";
+
+          try {
+            await fetch("/api/auth/sync-user", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                firebaseUid: fbUser.uid,
+                email: fbUser.email,
+                name: name.trim() || fbUser.displayName || userEmail.split("@")[0] || "User",
+                role: targetRole,
+                institutionName: role === "TEACHER" ? institution.trim() : undefined,
+              }),
+            });
+          } catch {}
+
+          try {
+            localStorage.setItem(
+              "khata_user",
+              JSON.stringify({
+                id: `usr_${fbUser.uid.slice(0, 10)}`,
+                name: name.trim() || fbUser.displayName || "User",
+                email: userEmail,
+                role: targetRole,
+                institution: role === "TEACHER" ? institution.trim() : "Student",
+              })
+            );
+            document.cookie = `khata_user_session=usr_${fbUser.uid.slice(0, 10)}; path=/; max-age=604800`;
+          } catch {}
+
+          window.location.replace(targetRole === "TEACHER" ? "/teacher" : "/student");
+          return;
+        } catch {}
+      }
+
+      // Fallback: Register directly on backend server in case Firebase Auth is blocked
+      try {
+        const fallbackRes = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: name.trim(),
+            email: email.trim().toLowerCase(),
+            password,
+            role,
+            institution: role === "TEACHER" ? institution.trim() : undefined,
+          }),
+        });
+
+        const fallbackData = await safeJsonParse(fallbackRes);
+        if (fallbackData?.success && fallbackData?.user) {
+          const u = fallbackData.user;
+          try {
+            localStorage.setItem(
+              "khata_user",
+              JSON.stringify({
+                id: u.id,
+                name: u.name,
+                email: u.email,
+                role: u.role,
+                institution: u.institution || institution.trim(),
+              })
+            );
+            document.cookie = `khata_user_session=${u.id}; path=/; max-age=604800`;
+          } catch {}
+
+          window.location.replace(role === "TEACHER" ? "/teacher" : "/student");
+          return;
+        }
+      } catch {}
+
       setError(formatFirebaseError(err.code || err.message));
     } finally {
       setIsLoading(false);

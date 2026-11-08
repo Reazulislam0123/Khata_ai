@@ -255,11 +255,25 @@ export default function TeacherDashboard() {
   });
 
   // Role separation guard: Students cannot access Teacher services
+  let localRole: string | null = null;
+  if (typeof window !== "undefined") {
+    try {
+      const stored = localStorage.getItem("khata_user");
+      if (stored) {
+        const u = JSON.parse(stored);
+        localRole = u?.role;
+      }
+    } catch {}
+  }
+
   const userEmail = (mongoUser?.email || firebaseUser?.email || "").toLowerCase();
   const isTeacher =
     mongoUser?.role === "TEACHER" ||
+    localRole === "TEACHER" ||
     mongoUser?.role === "ADMIN" ||
+    localRole === "ADMIN" ||
     mongoUser?.role === "SUPER_ADMIN" ||
+    localRole === "SUPER_ADMIN" ||
     userEmail.includes("teacher") ||
     userEmail.includes("udvash") ||
     userEmail.includes("admin") ||

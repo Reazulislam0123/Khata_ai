@@ -86,27 +86,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setMongoUser(null);
         }
       } else {
-        const isTeacher = fbUser.email?.toLowerCase().includes("teacher") || fbUser.email?.toLowerCase().includes("udvash");
-        const isAdmin = fbUser.email?.toLowerCase() === "admin@khata.ai" || fbUser.email?.toLowerCase().startsWith("admin@");
+        let storedRole: string | null = null;
+        let storedInst: any = null;
+        if (typeof window !== "undefined") {
+          try {
+            const stored = localStorage.getItem("khata_user");
+            if (stored) {
+              const u = JSON.parse(stored);
+              storedRole = u.role;
+              if (u.institution) {
+                storedInst = { _id: "inst_active", name: u.institution, slug: "my-institution", subscriptionPlan: "FREE" };
+              }
+            }
+          } catch {}
+        }
+
+        const isTeacher = storedRole === "TEACHER" || fbUser.email?.toLowerCase().includes("teacher") || fbUser.email?.toLowerCase().includes("udvash");
+        const isAdmin = storedRole === "ADMIN" || storedRole === "SUPER_ADMIN" || fbUser.email?.toLowerCase() === "admin@khata.ai" || fbUser.email?.toLowerCase().startsWith("admin@");
         setMongoUser({
           _id: `usr_${fbUser.uid.slice(0, 10)}`,
           firebaseUid: fbUser.uid,
           email: fbUser.email || "",
           name: fbUser.displayName || fbUser.email?.split("@")[0] || "User",
           role: isAdmin ? "SUPER_ADMIN" : isTeacher ? "TEACHER" : "STUDENT",
+          institutionId: isTeacher ? (storedInst || { _id: "inst_active", name: "Institution Portal", slug: "inst-portal", subscriptionPlan: "FREE" }) : null,
           isActive: true,
           createdAt: new Date().toISOString(),
         });
       }
     } catch {
-      const isTeacher = fbUser.email?.toLowerCase().includes("teacher") || fbUser.email?.toLowerCase().includes("udvash");
-      const isAdmin = fbUser.email?.toLowerCase() === "admin@khata.ai" || fbUser.email?.toLowerCase().startsWith("admin@");
+      let storedRole: string | null = null;
+      let storedInst: any = null;
+      if (typeof window !== "undefined") {
+        try {
+          const stored = localStorage.getItem("khata_user");
+          if (stored) {
+            const u = JSON.parse(stored);
+            storedRole = u.role;
+            if (u.institution) {
+              storedInst = { _id: "inst_active", name: u.institution, slug: "my-institution", subscriptionPlan: "FREE" };
+            }
+          }
+        } catch {}
+      }
+
+      const isTeacher = storedRole === "TEACHER" || fbUser.email?.toLowerCase().includes("teacher") || fbUser.email?.toLowerCase().includes("udvash");
+      const isAdmin = storedRole === "ADMIN" || storedRole === "SUPER_ADMIN" || fbUser.email?.toLowerCase() === "admin@khata.ai" || fbUser.email?.toLowerCase().startsWith("admin@");
       setMongoUser({
         _id: `usr_${fbUser.uid.slice(0, 10)}`,
         firebaseUid: fbUser.uid,
         email: fbUser.email || "",
         name: fbUser.displayName || fbUser.email?.split("@")[0] || "User",
         role: isAdmin ? "SUPER_ADMIN" : isTeacher ? "TEACHER" : "STUDENT",
+        institutionId: isTeacher ? (storedInst || { _id: "inst_active", name: "Institution Portal", slug: "inst-portal", subscriptionPlan: "FREE" }) : null,
         isActive: true,
         createdAt: new Date().toISOString(),
       });

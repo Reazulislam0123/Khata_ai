@@ -40,16 +40,30 @@ export function Navbar() {
   useEffect(() => {
     if (firebaseUser || mongoUser) {
       const userEmail = (mongoUser?.email || firebaseUser?.email || "").trim().toLowerCase();
+      let localRole: string | null = null;
+      let localInst: string | null = null;
+      try {
+        const s = localStorage.getItem("khata_user");
+        if (s) {
+          const parsed = JSON.parse(s);
+          localRole = parsed.role;
+          localInst = parsed.institution;
+        }
+      } catch {}
+
       const isAdmin =
         userEmail === "admin@khata.ai" ||
         userEmail === "admin" ||
         userEmail.startsWith("admin@") ||
         mongoUser?.role === "ADMIN" ||
-        mongoUser?.role === "SUPER_ADMIN";
+        mongoUser?.role === "SUPER_ADMIN" ||
+        localRole === "ADMIN" ||
+        localRole === "SUPER_ADMIN";
 
       const isTeacher =
         !isAdmin &&
         (mongoUser?.role === "TEACHER" ||
+          localRole === "TEACHER" ||
           userEmail.includes("teacher") ||
           userEmail.includes("udvash") ||
           Boolean(mongoUser?.institutionId));
@@ -65,11 +79,11 @@ export function Navbar() {
         name: isAdmin
           ? "admin"
           : isTeacher
-          ? mongoUser?.name || "Teacher"
+          ? mongoUser?.name || firebaseUser?.displayName || "Teacher"
           : mongoUser?.name || firebaseUser?.displayName || userEmail.split("@")[0] || "User",
         email: userEmail,
         role: detectedRole,
-        institution: mongoUser?.institutionId?.name || (isAdmin ? "KhataAI HQ" : isTeacher ? "Udvash Academic Care" : undefined),
+        institution: mongoUser?.institutionId?.name || localInst || (isAdmin ? "KhataAI HQ" : isTeacher ? "Institution Portal" : undefined),
         institutionSlug: mongoUser?.institutionId?.slug || undefined,
       };
       setCurrentUser(activeUser);

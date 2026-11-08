@@ -35,8 +35,8 @@ export async function GET(req: NextRequest) {
     if (!conn) {
       console.warn("MongoDB unavailable in /api/auth/me. Returning decoded token user profile.");
       const email = (decoded.email || "").toLowerCase();
-      const isTeacher = email.includes("teacher") || email.includes("udvash");
-      const isAdmin = email === "admin@khata.ai" || email.startsWith("admin@");
+      const isTeacher = decoded.role === "TEACHER" || Boolean(decoded.institutionId) || email.includes("teacher") || email.includes("udvash");
+      const isAdmin = decoded.role === "ADMIN" || decoded.role === "SUPER_ADMIN" || email === "admin@khata.ai" || email.startsWith("admin@");
       return NextResponse.json({
         success: true,
         user: {
@@ -45,6 +45,7 @@ export async function GET(req: NextRequest) {
           email: decoded.email,
           name: decoded.name || decoded.email?.split("@")[0] || "User",
           role: isAdmin ? "SUPER_ADMIN" : isTeacher ? "TEACHER" : "STUDENT",
+          institutionId: isTeacher ? (decoded.institutionId || "inst_active") : null,
           isActive: true,
         },
       });

@@ -9,6 +9,7 @@ import connectDB from "@/lib/mongodb";
 import { adminAuth } from "@/lib/firebase-admin";
 import User, { UserRole } from "@/models/User";
 import Institution from "@/models/Institution";
+import { store } from "@/lib/store";
 
 function generateSlug(text: string): string {
   const base = text
@@ -50,8 +51,20 @@ export async function POST(req: NextRequest) {
       assignedRole = "STUDENT";
     }
 
+    // Sync to in-memory store so zero-config layer is always updated
+    try {
+      store.registerUserFromSession({
+        id: `usr_${firebaseUid.slice(0, 10)}`,
+        name: name.trim(),
+        email: normalizedEmail,
+        role: assignedRole,
+        institution: institutionName || (assignedRole === "TEACHER" ? "My Institution" : "Student"),
+      });
+    } catch {}
+
     if (!conn) {
       console.warn("MongoDB unavailable in sync-user. Returning fallback profile.");
+      const mockInstId = `inst_${Date.now()}`;
       return NextResponse.json({
         success: true,
         user: {
@@ -60,9 +73,9 @@ export async function POST(req: NextRequest) {
           email: normalizedEmail,
           name: name.trim(),
           role: assignedRole,
-          institutionId: null,
-          institutionSlug: null,
-          institutionName: institutionName || (assignedRole === "TEACHER" ? "Udvash Academic & Admission Care" : null),
+          institutionId: assignedRole === "TEACHER" ? mockInstId : null,
+          institutionSlug: assignedRole === "TEACHER" ? generateSlug(institutionName || "my-institution") : null,
+          institutionName: assignedRole === "TEACHER" ? (institutionName || "My Institution") : null,
           isActive: true,
           createdAt: new Date().toISOString(),
         },
@@ -88,8 +101,8 @@ export async function POST(req: NextRequest) {
       console.log(`✅ New user created in MongoDB: ${normalizedEmail}`);
     } else {
       // Update role if teacher or super_admin
-      if (normalizedEmail.includes("teacher") && user.role !== "TEACHER") {
-        user.role = "TEACHER";
+      if (assignedRole === "TEACHER" || assignedRole === "SUPER_ADMIN") {
+        user.role = assignedRole;
       }
       if (user.firebaseUid !== firebaseUid) {
         user.firebaseUid = firebaseUid;
