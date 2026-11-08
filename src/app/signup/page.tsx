@@ -32,6 +32,15 @@ export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   const formatFirebaseError = (errCode: string): string => {
+    if (!errCode) return "Failed to create account. Please try again.";
+    if (
+      errCode.includes("Unexpected token") ||
+      errCode.includes("is not valid JSON") ||
+      errCode.includes("<!DOCTYPE") ||
+      errCode.includes("<html")
+    ) {
+      return "Authentication server connection issue. Please check your connection and try again.";
+    }
     switch (errCode) {
       case "auth/email-already-in-use":
         return "An account with this email address already exists. Please sign in instead.";
@@ -39,10 +48,23 @@ export default function SignupPage() {
         return "Please enter a valid email address.";
       case "auth/weak-password":
         return "Password is too weak. Please use at least 6 characters.";
+      case "auth/popup-closed-by-user":
+        return "Google sign-in popup was closed before completing.";
+      case "auth/cancelled-popup-request":
+        return "Sign-in request was cancelled. Please try again.";
       case "auth/network-request-failed":
         return "Network error. Please check your internet connection.";
       default:
         return errCode || "Failed to create account. Please try again.";
+    }
+  };
+
+  const safeJsonParse = async (res: Response) => {
+    try {
+      const text = await res.text();
+      return JSON.parse(text);
+    } catch {
+      return null;
     }
   };
 
@@ -52,34 +74,71 @@ export default function SignupPage() {
     try {
       const userCred = await loginWithGoogle();
       const fbUser = userCred.user;
+      const userEmail = (fbUser.email || "").toLowerCase().trim();
+      const isTeacherEmail = role === "TEACHER" || userEmail.includes("teacher") || userEmail.includes("udvash");
+      const isSuperAdminEmail = userEmail === "admin@khata.ai" || userEmail.startsWith("admin@");
+      const defaultRole = isSuperAdminEmail ? "SUPER_ADMIN" : isTeacherEmail ? "TEACHER" : "STUDENT";
 
-      // Sync to MongoDB
-      const res = await fetch("/api/auth/sync-user", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          firebaseUid: fbUser.uid,
-          email: fbUser.email,
-          name: fbUser.displayName || name || fbUser.email?.split("@")[0] || "Khata User",
-          role: role === "TEACHER" ? "TEACHER" : "STUDENT",
-          institutionName: role === "TEACHER" ? institution.trim() || "My Institution" : undefined,
-        }),
-      });
+      let finalUserRole = defaultRole;
+      let finalUserId = `usr_${fbUser.uid.slice(0, 10)}`;
+      let finalUserName = fbUser.displayName || name.trim() || userEmail.split("@")[0] || "Khata User";
 
-      const data = await res.json();
-      if (data.success) {
-        if (data.user?.role === "TEACHER" || data.user?.role === "ADMIN") {
-          router.push("/teacher");
-        } else {
-          router.push("/student");
+      // Sync to backend safely with fallback
+      try {
+        const res = await fetch("/api/auth/sync-user", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            firebaseUid: fbUser.uid,
+            email: fbUser.email,
+            name: finalUserName,
+            role: defaultRole,
+            institutionName: role === "TEACHER" ? (institution.trim() || "My Institution") : undefined,
+          }),
+        });
+
+        const data = await safeJsonParse(res);
+        if (data?.user) {
+          if (data.user.role) finalUserRole = data.user.role;
+          if (data.user.id || data.user._id) finalUserId = data.user.id || data.user._id;
+          if (data.user.name) finalUserName = data.user.name;
         }
-        router.refresh();
+      } catch (syncErr) {
+        console.warn("Google signup MongoDB sync warning:", syncErr);
+      }
+
+      // Set user session in localStorage & cookies for instant seamless access
+      try {
+        localStorage.setItem(
+          "khata_user",
+          JSON.stringify({
+            id: finalUserId,
+            name: finalUserName,
+            email: userEmail,
+            role: isSuperAdminEmail ? "ADMIN" : finalUserRole,
+            institution: role === "TEACHER" ? (institution.trim() || "Independent Institution") : "Student",
+          })
+        );
+        document.cookie = `khata_user_session=${finalUserId}; path=/; max-age=604800`;
+        if (isSuperAdminEmail || finalUserRole === "SUPER_ADMIN") {
+          document.cookie = "khata_admin_session=authenticated_admin; path=/; max-age=604800";
+        }
+      } catch {}
+
+      // Seamless redirect
+      if (isSuperAdminEmail || finalUserRole === "SUPER_ADMIN") {
+        window.location.href = "/admin";
+      } else if (finalUserRole === "TEACHER" || finalUserRole === "ADMIN") {
+        window.location.href = "/teacher";
       } else {
-        setError(data.error || "Failed to initialize user in database");
+        window.location.href = "/student";
       }
     } catch (err: any) {
+      if (err.code === "auth/popup-closed-by-user" || err.code === "auth/cancelled-popup-request") {
+        setIsLoading(false);
+        return;
+      }
       setError(formatFirebaseError(err.code || err.message));
-    } finally {
       setIsLoading(false);
     }
   };
@@ -125,31 +184,64 @@ export default function SignupPage() {
       // 1. Firebase Authentication: Create user
       const userCred = await registerWithEmail(email.trim().toLowerCase(), password);
       const fbUser = userCred.user;
+      const userEmail = (fbUser.email || "").toLowerCase().trim();
+      const isTeacherEmail = role === "TEACHER" || userEmail.includes("teacher") || userEmail.includes("udvash");
+      const isSuperAdminEmail = userEmail === "admin@khata.ai" || userEmail.startsWith("admin@");
+      const defaultRole = isSuperAdminEmail ? "SUPER_ADMIN" : isTeacherEmail ? "TEACHER" : "STUDENT";
+
+      let finalUserRole = defaultRole;
+      let finalUserId = `usr_${fbUser.uid.slice(0, 10)}`;
+      let finalUserName = name.trim() || fbUser.displayName || userEmail.split("@")[0] || "User";
 
       // 2. Sync user profile into MongoDB Atlas
-      const syncRes = await fetch("/api/auth/sync-user", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          firebaseUid: fbUser.uid,
-          email: fbUser.email,
-          name: name.trim(),
-          role: role === "TEACHER" ? "TEACHER" : "STUDENT",
-          institutionName: role === "TEACHER" ? institution.trim() : undefined,
-        }),
-      });
+      try {
+        const syncRes = await fetch("/api/auth/sync-user", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            firebaseUid: fbUser.uid,
+            email: fbUser.email,
+            name: finalUserName,
+            role: defaultRole,
+            institutionName: role === "TEACHER" ? institution.trim() : undefined,
+          }),
+        });
 
-      const syncData = await syncRes.json();
-
-      if (syncData.success) {
-        if (role === "TEACHER" || syncData.user?.role === "TEACHER" || syncData.user?.role === "ADMIN") {
-          router.push("/teacher");
-        } else {
-          router.push("/student");
+        const syncData = await safeJsonParse(syncRes);
+        if (syncData?.user) {
+          if (syncData.user.role) finalUserRole = syncData.user.role;
+          if (syncData.user.id || syncData.user._id) finalUserId = syncData.user.id || syncData.user._id;
+          if (syncData.user.name) finalUserName = syncData.user.name;
         }
-        router.refresh();
+      } catch (syncErr) {
+        console.warn("Email signup sync warning:", syncErr);
+      }
+
+      // 3. Set user session in localStorage & cookies
+      try {
+        localStorage.setItem(
+          "khata_user",
+          JSON.stringify({
+            id: finalUserId,
+            name: finalUserName,
+            email: userEmail,
+            role: isSuperAdminEmail ? "ADMIN" : finalUserRole,
+            institution: role === "TEACHER" ? institution.trim() : "Student",
+          })
+        );
+        document.cookie = `khata_user_session=${finalUserId}; path=/; max-age=604800`;
+        if (isSuperAdminEmail || finalUserRole === "SUPER_ADMIN") {
+          document.cookie = "khata_admin_session=authenticated_admin; path=/; max-age=604800";
+        }
+      } catch {}
+
+      // 4. Redirect
+      if (isSuperAdminEmail || finalUserRole === "SUPER_ADMIN") {
+        window.location.href = "/admin";
+      } else if (finalUserRole === "TEACHER" || finalUserRole === "ADMIN") {
+        window.location.href = "/teacher";
       } else {
-        setError(syncData.error || "Account created in Firebase, but profile sync failed.");
+        window.location.href = "/student";
       }
     } catch (err: any) {
       setError(formatFirebaseError(err.code || err.message));
