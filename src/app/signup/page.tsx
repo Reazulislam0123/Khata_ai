@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -17,9 +17,12 @@ import {
 } from "lucide-react";
 import { UserRole } from "@/lib/types";
 import { registerWithEmail, loginWithGoogle } from "@/lib/firebase";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function SignupPage() {
   const router = useRouter();
+  const { firebaseUser, mongoUser, loading } = useAuth();
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const [role, setRole] = useState<UserRole>("STUDENT");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -30,6 +33,57 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  // Auto-hide signup form and redirect if user is already logged in
+  useEffect(() => {
+    if (!loading && (firebaseUser || mongoUser)) {
+      setIsRedirecting(true);
+      const userEmail = (mongoUser?.email || firebaseUser?.email || "").toLowerCase().trim();
+      const isAdmin =
+        userEmail === "admin@khata.ai" ||
+        userEmail === "admin" ||
+        userEmail.startsWith("admin@") ||
+        mongoUser?.role === "ADMIN" ||
+        mongoUser?.role === "SUPER_ADMIN";
+      const isTeacher =
+        !isAdmin &&
+        (mongoUser?.role === "TEACHER" ||
+          userEmail.includes("teacher") ||
+          userEmail.includes("udvash") ||
+          Boolean(mongoUser?.institutionId));
+
+      const target = isAdmin ? "/admin" : isTeacher ? "/teacher" : "/student";
+      window.location.replace(target);
+      return;
+    }
+
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("khata_user");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed && (parsed.id || parsed.email)) {
+            setIsRedirecting(true);
+            const userEmail = (parsed.email || "").toLowerCase().trim();
+            const isAdmin =
+              userEmail === "admin@khata.ai" ||
+              userEmail === "admin" ||
+              userEmail.startsWith("admin@") ||
+              parsed.role === "ADMIN" ||
+              parsed.role === "SUPER_ADMIN";
+            const isTeacher =
+              !isAdmin &&
+              (parsed.role === "TEACHER" ||
+                userEmail.includes("teacher") ||
+                userEmail.includes("udvash"));
+
+            const target = isAdmin ? "/admin" : isTeacher ? "/teacher" : "/student";
+            window.location.replace(target);
+          }
+        }
+      } catch {}
+    }
+  }, [firebaseUser, mongoUser, loading]);
 
   const formatFirebaseError = (errCode: string): string => {
     if (!errCode) return "Failed to create account. Please try again.";
@@ -252,6 +306,18 @@ export default function SignupPage() {
 
   const isEmailMismatch = confirmEmail && email.trim().toLowerCase() !== confirmEmail.trim().toLowerCase();
   const isPasswordMismatch = confirmPassword && password !== confirmPassword;
+
+  if (isRedirecting || (!loading && (firebaseUser || mongoUser))) {
+    return (
+      <div className="min-h-[85vh] flex flex-col items-center justify-center p-4 space-y-4">
+        <div className="h-12 w-12 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+        <div className="text-center space-y-1">
+          <h2 className="text-lg font-black text-foreground">You are already signed in</h2>
+          <p className="text-xs text-muted-foreground">Redirecting to your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[90vh] flex items-center justify-center p-4 py-8">
