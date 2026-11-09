@@ -49,7 +49,34 @@ function initFirebaseAdmin(): App {
   return app;
 }
 
-const adminApp = initFirebaseAdmin();
-export const adminAuth = getAuth(adminApp);
+let adminApp: App | undefined;
+let adminAuthInstance: any = null;
+
+try {
+  adminApp = initFirebaseAdmin();
+} catch (err) {
+  console.warn("⚠️ initFirebaseAdmin caught error:", err);
+}
+
+export const adminAuth = new Proxy({} as any, {
+  get(_target, prop) {
+    if (!adminAuthInstance) {
+      try {
+        if (!adminApp) adminApp = initFirebaseAdmin();
+        if (adminApp) adminAuthInstance = getAuth(adminApp);
+      } catch (e) {
+        console.warn("⚠️ Firebase Admin Auth proxy initialization skipped:", e);
+      }
+    }
+    if (!adminAuthInstance) {
+      return async () => {
+        throw new Error("Firebase Admin Auth is not configured on this environment.");
+      };
+    }
+    const val = adminAuthInstance[prop];
+    return typeof val === "function" ? val.bind(adminAuthInstance) : val;
+  },
+});
+
 export { adminApp };
 export default adminApp;

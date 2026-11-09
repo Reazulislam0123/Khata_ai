@@ -9,6 +9,7 @@ import Exam from "@/models/Exam";
 import Question from "@/models/Question";
 import Institution from "@/models/Institution";
 import Batch from "@/models/Batch";
+import Subject from "@/models/Subject";
 import User from "@/models/User";
 import { store } from "@/lib/store";
 import { adminAuth } from "@/lib/firebase-admin";
