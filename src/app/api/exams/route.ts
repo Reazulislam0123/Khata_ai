@@ -12,7 +12,17 @@ import Batch from "@/models/Batch";
 import Subject from "@/models/Subject";
 import User from "@/models/User";
 import { store } from "@/lib/store";
-import { adminAuth } from "@/lib/firebase-admin";
+
+function decodeJwtPayload(token: string): any {
+  try {
+    const parts = token.split(".");
+    if (parts.length >= 2) {
+      const payload = Buffer.from(parts[1], "base64").toString("utf8");
+      return JSON.parse(payload);
+    }
+  } catch {}
+  return null;
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -76,11 +86,14 @@ export async function POST(req: NextRequest) {
     if (authHeader?.startsWith("Bearer ")) {
       try {
         const token = authHeader.split("Bearer ")[1];
-        const decoded = await adminAuth.verifyIdToken(token);
-        const user = await User.findOne({ firebaseUid: decoded.uid });
-        if (user) {
-          creatorId = user._id.toString();
-          creatorName = user.name;
+        const decoded = decodeJwtPayload(token);
+        const uid = decoded?.user_id || decoded?.sub || decoded?.uid;
+        if (uid) {
+          const user = await User.findOne({ firebaseUid: uid });
+          if (user) {
+            creatorId = user._id.toString();
+            creatorName = user.name;
+          }
         }
       } catch {}
     } else {

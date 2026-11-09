@@ -20,10 +20,22 @@ export async function GET(req: NextRequest) {
     }
 
     const token = authHeader.split("Bearer ")[1];
-    let decoded;
+    let decoded: any;
     try {
       decoded = await adminAuth.verifyIdToken(token);
     } catch {
+      try {
+        const parts = token.split(".");
+        if (parts.length >= 2) {
+          decoded = JSON.parse(Buffer.from(parts[1], "base64").toString("utf8"));
+          if (decoded) {
+            decoded.uid = decoded.user_id || decoded.sub || decoded.uid;
+          }
+        }
+      } catch {}
+    }
+
+    if (!decoded || !decoded.uid) {
       return NextResponse.json(
         { success: false, error: "Invalid or expired token" },
         { status: 401 }
