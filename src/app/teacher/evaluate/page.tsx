@@ -18,6 +18,7 @@ import {
   User,
 } from "lucide-react";
 import { Exam } from "@/lib/types";
+import { SEED_EXAMS } from "@/lib/seed-data";
 
 export default function TeacherEvaluationStudioPage() {
   return (
@@ -32,8 +33,11 @@ function TeacherEvaluationStudio() {
   const searchParams = useSearchParams();
   const preselectedExamId = searchParams.get("examId");
 
-  const [exams, setExams] = useState<Exam[]>([]);
-  const [selectedExamId, setSelectedExamId] = useState(preselectedExamId || "");
+  // Always initialize with guaranteed seed exams so dropdown is NEVER empty
+  const [exams, setExams] = useState<any[]>(SEED_EXAMS);
+  const [selectedExamId, setSelectedExamId] = useState(
+    preselectedExamId || (SEED_EXAMS[0]?.id as string) || "exam_hsc_physics_01"
+  );
   const [studentName, setStudentName] = useState("Adnan Sami");
   const [studentRoll, setStudentRoll] = useState("Roll: 1045 (Notre Dame College)");
   const [images, setImages] = useState<string[]>([
@@ -52,15 +56,21 @@ function TeacherEvaluationStudio() {
     fetch("/api/exams")
       .then((r) => r.json())
       .then((data) => {
-        if (data.exams && data.exams.length > 0) {
-          setExams(data.exams);
-          if (!selectedExamId) {
-            setSelectedExamId(data.exams[0].id || data.exams[0]._id);
+        if (data.exams && Array.isArray(data.exams) && data.exams.length > 0) {
+          const normalized = data.exams.map((e: any) => ({
+            ...e,
+            id: e.id || e._id?.toString() || "",
+            title: e.title || "Examination",
+            curriculumCode: e.curriculumCode || "HSC",
+          }));
+          setExams(normalized);
+          if (!selectedExamId && normalized.length > 0) {
+            setSelectedExamId(normalized[0].id);
           }
         }
       })
       .catch((err) => console.error("Error fetching exams:", err));
-  }, [selectedExamId]);
+  }, []);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -88,11 +98,19 @@ function TeacherEvaluationStudio() {
     });
   };
 
-  const handleLoadDemoScript = (samplePath: string, name: string, roll: string) => {
+  const handleLoadDemoScript = (
+    samplePath: string,
+    name: string,
+    roll: string,
+    targetExamId?: string
+  ) => {
     setImages([samplePath]);
     setStudentName(name);
     setStudentRoll(roll);
     setActivePreviewIdx(0);
+    if (targetExamId) {
+      setSelectedExamId(targetExamId);
+    }
   };
 
   const handleStartEvaluation = async () => {
@@ -194,13 +212,16 @@ function TeacherEvaluationStudio() {
           <select
             value={selectedExamId}
             onChange={(e) => setSelectedExamId(e.target.value)}
-            className="w-full px-3 py-2 rounded-xl border border-border bg-background text-xs font-medium focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+            className="w-full px-3 py-2 rounded-xl border border-border bg-background text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none"
           >
-            {exams.map((exam) => (
-              <option key={exam.id} value={exam.id}>
-                [{exam.curriculumCode}] {exam.title}
-              </option>
-            ))}
+            {exams.map((exam: any) => {
+              const examId = exam.id || exam._id?.toString() || "";
+              return (
+                <option key={examId} value={examId}>
+                  [{exam.curriculumCode || "HSC"}] {exam.title}
+                </option>
+              );
+            })}
           </select>
         </div>
 
@@ -299,7 +320,8 @@ function TeacherEvaluationStudio() {
                     handleLoadDemoScript(
                       "/samples/bengali_cq_script.svg",
                       "Adnan Sami",
-                      "Roll: 1045 (Notre Dame College)"
+                      "Roll: 1045 (Notre Dame College)",
+                      "exam_hsc_physics_01"
                     )
                   }
                   className="px-2.5 py-1 rounded-lg border border-purple-300 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/40 text-purple-800 dark:text-purple-300 font-semibold hover:bg-purple-100 transition-all"
@@ -312,7 +334,8 @@ function TeacherEvaluationStudio() {
                     handleLoadDemoScript(
                       "/samples/chemistry_cq_script.svg",
                       "Tahmid Hasan",
-                      "Roll: 2018 (Dhaka College)"
+                      "Roll: 2018 (Dhaka College)",
+                      "exam_hsc_chem_01"
                     )
                   }
                   className="px-2.5 py-1 rounded-lg border border-teal-300 dark:border-teal-800 bg-teal-50 dark:bg-teal-950/40 text-teal-800 dark:text-teal-300 font-semibold hover:bg-teal-100 transition-all"
@@ -325,7 +348,8 @@ function TeacherEvaluationStudio() {
                     handleLoadDemoScript(
                       "/samples/math_cq_script.svg",
                       "Samiha Rahman",
-                      "Roll: 1022 (Viqarunnisa)"
+                      "Roll: 1022 (Viqarunnisa)",
+                      "exam_hsc_math_01"
                     )
                   }
                   className="px-2.5 py-1 rounded-lg border border-blue-300 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300 font-semibold hover:bg-blue-100 transition-all"
@@ -338,7 +362,8 @@ function TeacherEvaluationStudio() {
                     handleLoadDemoScript(
                       "/samples/handwritten_essay_intro.jpg",
                       "Tanvir Ahmed",
-                      "Roll: 3012 (Rajuk Uttara)"
+                      "Roll: 3012 (Rajuk Uttara)",
+                      "exam_hsc_physics_01"
                     )
                   }
                   className="px-2.5 py-1 rounded-lg border border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 font-semibold hover:bg-emerald-100 transition-all"

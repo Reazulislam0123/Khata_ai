@@ -36,6 +36,42 @@ export async function POST(req: Request) {
       exam = store.getExamById(submission.examId);
     }
 
+    // If not found in store, lookup in MongoDB Atlas
+    if (!exam && examId) {
+      try {
+        await connectDB();
+        const mongoExam = await ExamModel.findById(examId)
+          .populate("questions.questionId")
+          .lean();
+        if (mongoExam) {
+          exam = {
+            id: (mongoExam as any)._id.toString(),
+            title: (mongoExam as any).title,
+            subject: (mongoExam as any).title,
+            curriculumCode: (mongoExam as any).curriculumCode || "HSC",
+            creatorId: (mongoExam as any).createdBy?.toString() || "teacher",
+            creatorName: "Instructor",
+            durationMinutes: (mongoExam as any).durationMinutes || 60,
+            totalMarks: (mongoExam as any).totalMarks || 100,
+            isOnline: true,
+            isPublished: true,
+            passMarkPercentage: (mongoExam as any).passMarkPercentage || 33,
+            negativeMarkingRate: (mongoExam as any).negativeMarkingRate || 0,
+            createdAt: (mongoExam as any).createdAt?.toISOString() || new Date().toISOString(),
+            updatedAt: (mongoExam as any).updatedAt?.toISOString() || new Date().toISOString(),
+            questions: ((mongoExam as any).questions || []).map((q: any, i: number) => ({
+              ...(q.questionId || {}),
+              id: q.questionId?._id?.toString() || `q_${i}`,
+              marks: q.allocatedMarks || q.questionId?.marks || 10,
+              type: q.questionId?.type || "CQ",
+            })),
+          };
+        }
+      } catch (err) {
+        console.warn("MongoDB exam lookup fallback:", err);
+      }
+    }
+
     if (!exam && customExam) {
       exam = {
         id: customExam.id || `custom_exam_${Date.now()}`,

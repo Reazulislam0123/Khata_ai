@@ -8,38 +8,54 @@ import connectDB from "@/lib/mongodb";
 import Exam from "@/models/Exam";
 import Question from "@/models/Question";
 import Institution from "@/models/Institution";
+import Batch from "@/models/Batch";
 import User from "@/models/User";
 import { store } from "@/lib/store";
 import { adminAuth } from "@/lib/firebase-admin";
 
 export async function GET(req: NextRequest) {
   try {
-    await connectDB();
     const { searchParams } = new URL(req.url);
     const batchId = searchParams.get("batchId");
     const institutionSlug = searchParams.get("institutionSlug");
 
-    let query: any = {};
-    if (batchId) query.batchId = batchId;
+    let mongoExams: any[] = [];
+    try {
+      await connectDB();
+      let query: any = {};
+      if (batchId) query.batchId = batchId;
 
-    if (institutionSlug) {
-      const inst = await Institution.findOne({ slug: institutionSlug });
-      if (inst) query.institutionId = inst._id;
+      if (institutionSlug) {
+        const inst = await Institution.findOne({ slug: institutionSlug });
+        if (inst) query.institutionId = inst._id;
+      }
+
+      const found = await Exam.find(query)
+        .populate("batchId", "name curriculumCode")
+        .populate("institutionId", "name slug")
+        .sort({ createdAt: -1 })
+        .lean();
+
+      mongoExams = (found || []).map((e: any) => ({
+        ...e,
+        id: e._id?.toString() || e.id,
+        title: e.title || "Examination",
+        curriculumCode: e.curriculumCode || "HSC",
+      }));
+    } catch (dbErr) {
+      console.warn("MongoDB exams fetch fallback to store:", dbErr);
     }
 
-    const mongoExams = await Exam.find(query)
-      .populate("batchId", "name curriculumCode")
-      .populate("institutionId", "name slug")
-      .sort({ createdAt: -1 })
-      .lean();
-
-    if (mongoExams.length > 0) {
-      return NextResponse.json({ success: true, exams: mongoExams });
-    }
-
-    // Default to store exams if MongoDB doesn't have custom ones yet
     const seedExams = store.getExams();
-    return NextResponse.json({ success: true, exams: seedExams });
+    const existingIds = new Set(mongoExams.map((e: any) => e.id));
+    const combined = [...mongoExams];
+    for (const s of seedExams) {
+      if (!existingIds.has(s.id)) {
+        combined.push(s);
+      }
+    }
+
+    return NextResponse.json({ success: true, exams: combined });
   } catch (err: any) {
     console.error("GET /api/exams error:", err);
     return NextResponse.json({ success: true, exams: store.getExams() });
