@@ -6,6 +6,7 @@ import {
   Sparkles,
   BookOpen,
   Plus,
+  PlusCircle,
   Trash2,
   Copy,
   CheckCircle2,
@@ -1018,7 +1019,7 @@ export default function FullQuestionSetModal({
                 </div>
 
                 {/* Jump Grid Buttons */}
-                <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-1">
+                <div className="flex flex-wrap items-center gap-1.5 max-h-36 overflow-y-auto p-1">
                   {questions.map((q, idx) => {
                     const isActive = idx === activeQuestionIdx;
                     const isFilled =
@@ -1042,6 +1043,17 @@ export default function FullQuestionSetModal({
                       </button>
                     );
                   })}
+
+                  {/* + Icon button staying directly after the latest question */}
+                  <button
+                    type="button"
+                    onClick={handleAddQuestion}
+                    className="h-7 px-2.5 rounded-lg text-xs font-black bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm flex items-center gap-1 transition-all hover:scale-105 shrink-0"
+                    title={`Add Question #${questions.length + 1} after latest question`}
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    <span>+ Q{questions.length + 1}</span>
+                  </button>
                 </div>
               </div>
 
@@ -1232,6 +1244,23 @@ export default function FullQuestionSetModal({
                       </div>
                     </div>
                   )}
+
+                  {/* Dedicated Action Row right after this question */}
+                  <div className="pt-4 border-t border-border flex flex-wrap items-center justify-between gap-3 bg-muted/30 p-3.5 rounded-2xl">
+                    <div className="flex items-center gap-2 text-xs font-bold text-foreground">
+                      <PlusCircle className="h-4 w-4 text-emerald-600" />
+                      <span>Add Next Question (After Q{activeQuestionIdx + 1}):</span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleAddQuestion}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-emerald-400 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 text-xs font-bold hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-all shadow-sm hover:scale-105"
+                    >
+                      <Plus className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                      <span>+ Add New {setType} Template</span>
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

@@ -140,34 +140,44 @@ export default function QuestionBankCards() {
     setExpandedCq((prev) => ({ ...prev, [qId]: !prev[qId] }));
   };
 
-  const openCreateModal = () => {
+  const openCreateModal = (type: "CQ" | "MCQ" | "WRITTEN" = "CQ") => {
     setEditingId(null);
-    setFormType("CQ");
-    setFormQuestionText("উদ্দীপকটি পড়ে নিচের প্রশ্নগুলোর যথাযথ উত্তর দাও:");
-    setFormStimulusText("");
-    setFormMarks(10);
+    setFormType(type);
     setFormDifficulty("MEDIUM");
     setFormCurriculum("HSC");
     setFormTags("পদার্থবিজ্ঞান, গতিবিদ্যা, HSC-2026");
 
-    // MCQ reset
-    setMcqA("");
-    setMcqB("");
-    setMcqC("");
-    setMcqD("");
-    setFormCorrectOption("A");
+    if (type === "MCQ") {
+      setFormQuestionText("");
+      setFormStimulusText("");
+      setFormMarks(1);
+      setMcqA("");
+      setMcqB("");
+      setMcqC("");
+      setMcqD("");
+      setFormCorrectOption("A");
+      setWrittenAnswer("");
+    } else if (type === "WRITTEN") {
+      setFormQuestionText("");
+      setFormStimulusText("");
+      setFormMarks(5);
+      setWrittenAnswer("");
+    } else {
+      // CQ
+      setFormQuestionText("উদ্দীপকটি পড়ে নিচের প্রশ্নগুলোর যথাযথ উত্তর দাও:");
+      setFormStimulusText("");
+      setFormMarks(10);
+      setCqKaText("");
+      setCqKaAnswer("");
+      setCqKhaText("");
+      setCqKhaAnswer("");
+      setCqGaText("");
+      setCqGaAnswer("");
+      setCqGhaText("");
+      setCqGhaAnswer("");
+      setWrittenAnswer("");
+    }
 
-    // CQ reset
-    setCqKaText("প্রাস (Projectile) কী?");
-    setCqKaAnswer("অনুভূমিকের সাথে কোনো কোণে শূন্যে নিক্ষিপ্ত বস্তুকে প্রাস বলে।");
-    setCqKhaText("অনুভূমিক বরাবর নিক্ষিপ্ত বস্তুর ত্বরণ শূন্য কেন?");
-    setCqKhaAnswer("অনুভূমিক দিকে কোনো বাহ্যিক বল ক্রিয়াশীল থাকে না।");
-    setCqGaText("তির্যকভাবে নিক্ষিপ্ত বস্তুর সর্বাধিক উচ্চতা নির্ণয় কর।");
-    setCqGaAnswer("H = (u² sin² θ) / (2g)");
-    setCqGhaText("উভয় বস্তুর ভূমিতে আঘাতের সময় গাণিতিকভাবে বিশ্লেষণ কর।");
-    setCqGhaAnswer("উভয়ের ক্ষেত্রে উল্লম্ব গতির সূত্র প্রয়োগ করে সময় গণনা করা হলো।");
-
-    setWrittenAnswer("");
     setShowModal(true);
   };
 
@@ -406,27 +416,50 @@ export default function QuestionBankCards() {
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5">
-            <button
-              onClick={() => setShowFullSetModal(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white text-xs font-black shadow-md shadow-emerald-600/30 transition-all hover:scale-[1.02]"
-            >
-              <BookOpen className="h-4 w-4" />
-              <span>📚 Create Full Question Set (20 / 40 / 100 Qs)</span>
-            </button>
+          <div className="flex flex-wrap items-center gap-2">
+            {/* AI Generator Pill */}
             <button
               onClick={() => setShowAiModal(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 text-xs font-bold hover:bg-emerald-100 transition-all shadow-sm"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-purple-300 dark:border-purple-800 bg-purple-50/70 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 text-xs font-bold hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-all shadow-sm hover:scale-[1.02]"
             >
-              <Sparkles className="h-4 w-4 text-emerald-600" />
-              <span>⚡ AI Question Generator</span>
+              <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+              <span>✨ ⚡ AI Question Generator</span>
             </button>
+
+            {/* Add CQ Pill */}
             <button
-              onClick={openCreateModal}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md shadow-emerald-600/20 transition-all"
+              onClick={() => openCreateModal("CQ")}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-emerald-400 dark:border-emerald-700 bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 text-xs font-bold hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-all shadow-sm hover:scale-[1.02]"
             >
-              <PlusCircle className="h-4 w-4" />
-              <span>Create Question Card</span>
+              <PlusCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+              <span>+ Add CQ (ক, খ, গ, ঘ)</span>
+            </button>
+
+            {/* Add Written Pill */}
+            <button
+              onClick={() => openCreateModal("WRITTEN")}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-blue-400 dark:border-blue-700 bg-blue-50/70 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300 text-xs font-bold hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-all shadow-sm hover:scale-[1.02]"
+            >
+              <PlusCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <span>+ Add Written Question</span>
+            </button>
+
+            {/* Add MCQ Pill */}
+            <button
+              onClick={() => openCreateModal("MCQ")}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-teal-400 dark:border-teal-700 bg-teal-50/70 dark:bg-teal-950/40 text-teal-800 dark:text-teal-300 text-xs font-bold hover:bg-teal-100 dark:hover:bg-teal-900/40 transition-all shadow-sm hover:scale-[1.02]"
+            >
+              <PlusCircle className="h-4 w-4 text-teal-600 dark:text-teal-400" />
+              <span>+ Add MCQ</span>
+            </button>
+
+            {/* Full Question Set Builder */}
+            <button
+              onClick={() => setShowFullSetModal(true)}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white text-xs font-black shadow-md shadow-emerald-600/30 transition-all hover:scale-[1.02]"
+            >
+              <BookOpen className="h-4 w-4" />
+              <span>📚 Full Question Set (20 / 40 / 100 Qs)</span>
             </button>
           </div>
         </div>
@@ -492,7 +525,7 @@ export default function QuestionBankCards() {
             No questions match your current search query. Create a new card or click AI Generator.
           </p>
           <button
-            onClick={openCreateModal}
+            onClick={() => openCreateModal("CQ")}
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold shadow-md shadow-emerald-600/20"
           >
             <PlusCircle className="h-4 w-4" /> Create First Question Card
@@ -696,6 +729,59 @@ export default function QuestionBankCards() {
               </div>
             );
           })}
+
+          {/* Dedicated "+ Add Next Question" Card right after the latest question */}
+          <div className="col-span-full rounded-3xl border-2 border-dashed border-emerald-300 dark:border-emerald-800 bg-gradient-to-r from-emerald-50/50 via-teal-50/30 to-background dark:from-emerald-950/20 dark:to-background p-6 sm:p-7 text-center space-y-3.5 shadow-sm hover:border-emerald-500 transition-all">
+            <div className="flex flex-col items-center justify-center gap-1.5">
+              <span className="p-3 rounded-2xl bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 shadow-sm animate-pulse">
+                <PlusCircle className="h-6 w-6" />
+              </span>
+              <h3 className="text-sm sm:text-base font-extrabold text-foreground">
+                + Add Next Question Card (After Question #{filteredQuestions.length})
+              </h3>
+              <p className="text-xs text-muted-foreground max-w-md">
+                Click any template button below to instantly create the next question card:
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center gap-2.5 pt-1">
+              <button
+                type="button"
+                onClick={() => openCreateModal("CQ")}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-emerald-400 dark:border-emerald-700 bg-emerald-50/90 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 text-xs font-bold hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-all shadow-sm hover:scale-105"
+              >
+                <PlusCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                <span>+ Add CQ (ক, খ, গ, ঘ)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => openCreateModal("MCQ")}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-teal-400 dark:border-teal-700 bg-teal-50/90 dark:bg-teal-950/50 text-teal-800 dark:text-teal-300 text-xs font-bold hover:bg-teal-100 dark:hover:bg-teal-900/40 transition-all shadow-sm hover:scale-105"
+              >
+                <PlusCircle className="h-4 w-4 text-teal-600 dark:text-teal-400" />
+                <span>+ Add MCQ</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => openCreateModal("WRITTEN")}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-blue-400 dark:border-blue-700 bg-blue-50/90 dark:bg-blue-950/50 text-blue-800 dark:text-blue-300 text-xs font-bold hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-all shadow-sm hover:scale-105"
+              >
+                <PlusCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                <span>+ Add Written Question</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowAiModal(true)}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-purple-300 dark:border-purple-800 bg-purple-50/90 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 text-xs font-bold hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-all shadow-sm hover:scale-105"
+              >
+                <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                <span>✨ ⚡ AI Question Generator</span>
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
