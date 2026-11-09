@@ -22,6 +22,7 @@ import {
   FileText,
   Sliders,
 } from "lucide-react";
+import FullQuestionSetModal from "./FullQuestionSetModal";
 
 export interface RubricPoint {
   criterion: string;
@@ -72,6 +73,7 @@ export default function QuestionBankCards() {
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>("ALL");
 
   // Modals & Forms
+  const [showFullSetModal, setShowFullSetModal] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -405,6 +407,13 @@ export default function QuestionBankCards() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
+            <button
+              onClick={() => setShowFullSetModal(true)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white text-xs font-black shadow-md shadow-emerald-600/30 transition-all hover:scale-[1.02]"
+            >
+              <BookOpen className="h-4 w-4" />
+              <span>📚 Create Full Question Set (20 / 40 / 100 Qs)</span>
+            </button>
             <button
               onClick={() => setShowAiModal(true)}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 text-xs font-bold hover:bg-emerald-100 transition-all shadow-sm"
@@ -1091,6 +1100,12 @@ export default function QuestionBankCards() {
           </div>
         </div>
       )}
+      {/* Full Question Set Builder Modal */}
+      <FullQuestionSetModal
+        isOpen={showFullSetModal}
+        onClose={() => setShowFullSetModal(false)}
+        onSuccess={() => fetchQuestions()}
+      />
     </div>
   );
 }

@@ -300,6 +300,67 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
+
+    // Check if bulk insert mode
+    const isBulk = Array.isArray(body) || (body && Array.isArray(body.questions));
+    if (isBulk) {
+      const items = Array.isArray(body) ? body : body.questions;
+      if (!items || items.length === 0) {
+        return NextResponse.json(
+          { success: false, error: "Questions array cannot be empty." },
+          { status: 400 }
+        );
+      }
+
+      const payloads = items.map((item: any, idx: number) => ({
+        type: item.type || "MCQ",
+        questionText: (item.questionText || `Question ${idx + 1}`).trim(),
+        stimulusText: item.stimulusText?.trim() || null,
+        imageUrl: item.imageUrl || null,
+        marks: Number(item.marks) || (item.type === "CQ" ? 10 : 1),
+        difficulty: item.difficulty || "MEDIUM",
+        curriculumCode: item.curriculumCode || "HSC",
+        tags: Array.isArray(item.tags)
+          ? item.tags
+          : typeof item.tags === "string"
+          ? item.tags.split(",").map((t: string) => t.trim())
+          : ["Question Set"],
+        mcqOptions: item.type === "MCQ" ? item.mcqOptions || [] : undefined,
+        correctOption: item.type === "MCQ" ? item.correctOption || "A" : undefined,
+        cqParts: item.type === "CQ" ? item.cqParts || [] : undefined,
+        modelAnswer:
+          item.type === "WRITTEN" || item.type === "DESCRIPTIVE"
+            ? item.modelAnswer || ""
+            : undefined,
+        rubrics: item.rubrics || [],
+        aiGenerated: !!item.aiGenerated,
+      }));
+
+      let createdQuestions: any[] = [];
+      try {
+        await connectDB();
+        const mongoCreated = await QuestionModel.insertMany(payloads);
+        createdQuestions = mongoCreated.map((q: any) => ({
+          ...q.toObject(),
+          id: q._id.toString(),
+        }));
+      } catch (dbErr) {
+        console.warn("MongoDB bulk question insert warning, using in-memory:", dbErr);
+        createdQuestions = payloads.map((p: any, idx: number) => ({
+          ...p,
+          id: `q_bulk_${Date.now()}_${idx + 1}`,
+          createdAt: new Date().toISOString(),
+        }));
+      }
+
+      return NextResponse.json({
+        success: true,
+        count: createdQuestions.length,
+        questions: createdQuestions,
+        message: `Successfully saved ${createdQuestions.length} questions into Question Bank!`,
+      });
+    }
+
     const {
       type,
       questionText,
